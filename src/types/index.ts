@@ -1,20 +1,8 @@
-// Core application types
+// Re-export storage types
+export * from './storage';
+
+// Core application types (keeping for backward compatibility)
 export type ModuleType = 'dashboard' | 'kanban' | 'canvas' | 'chat';
-
-// User and session types
-export interface UserSession {
-  id: string;
-  githubToken?: string;
-  preferences: UserPreferences;
-  lastActive: Date;
-}
-
-export interface UserPreferences {
-  theme: 'dark' | 'light';
-  sidebarCollapsed: boolean;
-  defaultModule: ModuleType;
-  githubSyncEnabled: boolean;
-}
 
 // Common utility types
 export interface Point {

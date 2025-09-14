@@ -1,15 +1,24 @@
+import { GitHubDemo } from '@/components/github-demo';
+import { Logo } from '@/components/logo';
+
 export default function Home() {
   return (
-    <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
-      <div className="text-center space-y-6 p-8">
-        <h1 className="text-4xl font-bold text-primary">
-          Welcome to Devorch Suite
-        </h1>
-        <p className="text-xl text-muted-foreground max-w-2xl">
-          AI-powered developer productivity platform with GitHub integration, 
-          Kanban boards, project canvas, and intelligent code analysis
-        </p>
-        <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8">
+    <div className="min-h-screen bg-background text-foreground">
+      <div className="container mx-auto p-8 space-y-8">
+        <div className="text-center space-y-6">
+          <div className="flex justify-center mb-4">
+            <Logo variant="full" size="xl" />
+          </div>
+          <h1 className="text-4xl font-bold text-primary">
+            Welcome to Devorc Suite
+          </h1>
+          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+            AI-powered developer productivity platform with GitHub integration, 
+            Kanban boards, project canvas, and intelligent code analysis
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="bg-card border border-border rounded-lg p-4 text-left">
             <h3 className="font-semibold text-primary mb-2">🚀 GitHub Dashboard</h3>
             <p className="text-sm text-muted-foreground">
@@ -35,9 +44,11 @@ export default function Home() {
             </p>
           </div>
         </div>
-        <p className="text-sm text-muted-foreground mt-8">
-          Project foundation setup complete. Ready for module implementation.
-        </p>
+
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-2xl font-semibold mb-6 text-center">GitHub Integration Demo</h2>
+          <GitHubDemo />
+        </div>
       </div>
     </div>
   );
