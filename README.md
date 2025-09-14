@@ -14,6 +14,7 @@ An AI-powered developer productivity platform that integrates:
 - 📋 **Smart Kanban** - Visual task management with GitHub sync
 - 🎨 **Project Canvas** - Interactive brainstorming and architecture visualization  
 - 🤖 **AI Assistant** - Intelligent code analysis and development insights
+- 💬 **Slack Integration** - Real-time commit notifications and team collaboration
 
 ## 🤖 AI-Assisted Development Process
 
@@ -73,6 +74,7 @@ This project was built using **Kiro AI** with a structured spec-driven developme
    GITHUB_CLIENT_SECRET=your_github_client_secret
    OPENAI_API_KEY=your_openai_api_key
    NEXTAUTH_SECRET=your_nextauth_secret
+   SLACK_WEBHOOK_URL=your_slack_webhook_url  # Optional: for Slack notifications
    ```
 
 4. **Run the development server**

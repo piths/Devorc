@@ -75,6 +75,20 @@ export interface GitHubPullRequest {
   created_at: string;
   updated_at: string;
   html_url: string;
+  mergeable?: boolean;
+  merged?: boolean;
+  merged_at?: string;
+  assignees?: GitHubUser[];
+  requested_reviewers?: GitHubUser[];
+}
+
+export interface GitHubBranch {
+  name: string;
+  commit: {
+    sha: string;
+    url: string;
+  };
+  protected: boolean;
 }
 
 export interface CreateIssueRequest {
@@ -90,6 +104,35 @@ export interface UpdateIssueRequest {
   state?: 'open' | 'closed';
   assignee?: string;
   labels?: string[];
+}
+
+export interface CreateBranchRequest {
+  ref: string; // The name of the fully qualified reference (ie: refs/heads/master)
+  sha: string; // The SHA1 value to set this reference to
+}
+
+export interface CreatePullRequestRequest {
+  title: string;
+  head: string; // The name of the branch where your changes are implemented
+  base: string; // The name of the branch you want the changes pulled into
+  body?: string;
+  maintainer_can_modify?: boolean;
+  draft?: boolean;
+}
+
+export interface UpdatePullRequestRequest {
+  title?: string;
+  body?: string;
+  state?: 'open' | 'closed';
+  base?: string;
+  maintainer_can_modify?: boolean;
+}
+
+export interface MergePullRequestRequest {
+  commit_title?: string;
+  commit_message?: string;
+  sha?: string; // SHA that pull request head must match to allow merge
+  merge_method?: 'merge' | 'squash' | 'rebase';
 }
 
 export interface GitHubConnection {

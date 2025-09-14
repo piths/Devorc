@@ -12,18 +12,24 @@ import {
   AlertCircle, 
   RefreshCw,
   Calendar,
-  User
+  User,
+  MessageSquare
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import { useSlackNotifications } from '@/hooks/useSlackNotifications';
+import { useToast } from '@/hooks/use-toast';
 
 interface CommitListProps {
   commits: GitHubCommit[];
   loading: boolean;
   error: string | null;
   onRetry: () => void;
+  repositoryName?: string;
+  repositoryUrl?: string;
+  branch?: string;
 }
 
-export function CommitList({ commits, loading, error, onRetry }: CommitListProps) {
+export function CommitList({ commits, loading, error, onRetry, repositoryName, repositoryUrl, branch }: CommitListProps) {
   if (error) {
     return (
       <Card>
@@ -96,7 +102,13 @@ export function CommitList({ commits, loading, error, onRetry }: CommitListProps
       <CardContent>
         <div className="space-y-3">
           {commits.map((commit) => (
-            <CommitItem key={commit.sha} commit={commit} />
+            <CommitItem 
+              key={commit.sha} 
+              commit={commit}
+              repositoryName={repositoryName}
+              repositoryUrl={repositoryUrl}
+              branch={branch}
+            />
           ))}
         </div>
       </CardContent>
@@ -106,9 +118,15 @@ export function CommitList({ commits, loading, error, onRetry }: CommitListProps
 
 interface CommitItemProps {
   commit: GitHubCommit;
+  repositoryName?: string;
+  repositoryUrl?: string;
+  branch?: string;
 }
 
-function CommitItem({ commit }: CommitItemProps) {
+function CommitItem({ commit, repositoryName, repositoryUrl, branch }: CommitItemProps) {
+  const { toast } = useToast();
+  const { sendCommitNotification, isLoading } = useSlackNotifications();
+  
   const commitDate = new Date(commit.commit.author.date);
   const timeAgo = formatDistanceToNow(commitDate, { addSuffix: true });
   
@@ -118,6 +136,39 @@ function CommitItem({ commit }: CommitItemProps) {
 
   const handleExternalClick = () => {
     window.open(commit.html_url, '_blank', 'noopener,noreferrer');
+  };
+
+  const handleSlackNotify = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    if (!repositoryName || !repositoryUrl) {
+      toast({
+        title: "Cannot send notification",
+        description: "Repository information is missing",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const success = await sendCommitNotification(commit, {
+      repositoryName,
+      repositoryUrl,
+      branch: branch || 'main',
+      includeFiles: true
+    });
+
+    if (success) {
+      toast({
+        title: "Notification sent",
+        description: "Commit notification sent to Slack",
+      });
+    } else {
+      toast({
+        title: "Failed to send notification",
+        description: "Could not send Slack notification",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -151,14 +202,28 @@ function CommitItem({ commit }: CommitItemProps) {
             </div>
           </div>
           
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleExternalClick}
-            className="flex-shrink-0"
-          >
-            <ExternalLink className="h-3 w-3" />
-          </Button>
+          <div className="flex items-center gap-1">
+            {repositoryName && repositoryUrl && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleSlackNotify}
+                disabled={isLoading}
+                className="flex-shrink-0"
+                title="Send to Slack"
+              >
+                <MessageSquare className="h-3 w-3" />
+              </Button>
+            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleExternalClick}
+              className="flex-shrink-0"
+            >
+              <ExternalLink className="h-3 w-3" />
+            </Button>
+          </div>
         </div>
       </div>
     </div>

@@ -191,3 +191,98 @@ export function useUpdateIssue() {
 
   return useGitHubApi(execute);
 }
+
+// Branch management hooks
+export function useBranches() {
+  const { apiClient } = useGitHubAuth();
+  
+  const execute = useCallback(async (
+    owner: string, 
+    repo: string, 
+    options?: {
+      protected?: boolean;
+      per_page?: number;
+      page?: number;
+    }
+  ) => {
+    if (!apiClient) throw new Error('Not authenticated');
+    return apiClient.getBranches(owner, repo, options);
+  }, [apiClient]);
+
+  return useGitHubApi(execute);
+}
+
+export function useCreateBranch() {
+  const { apiClient } = useGitHubAuth();
+  
+  const execute = useCallback(async (
+    owner: string, 
+    repo: string, 
+    branchName: string,
+    fromSha: string
+  ) => {
+    if (!apiClient) throw new Error('Not authenticated');
+    return apiClient.createBranch(owner, repo, branchName, fromSha);
+  }, [apiClient]);
+
+  return useGitHubApi(execute);
+}
+
+export function useDeleteBranch() {
+  const { apiClient } = useGitHubAuth();
+  
+  const execute = useCallback(async (
+    owner: string, 
+    repo: string, 
+    branchName: string
+  ) => {
+    if (!apiClient) throw new Error('Not authenticated');
+    return apiClient.deleteBranch(owner, repo, branchName);
+  }, [apiClient]);
+
+  return useGitHubApi(execute);
+}
+
+// Pull request management hooks
+export function useCreatePullRequest() {
+  const { apiClient } = useGitHubAuth();
+  
+  const execute = useCallback(async (
+    owner: string, 
+    repo: string, 
+    pullRequest: {
+      title: string;
+      head: string;
+      base: string;
+      body?: string;
+      maintainer_can_modify?: boolean;
+      draft?: boolean;
+    }
+  ) => {
+    if (!apiClient) throw new Error('Not authenticated');
+    return apiClient.createPullRequest(owner, repo, pullRequest);
+  }, [apiClient]);
+
+  return useGitHubApi(execute);
+}
+
+export function useMergePullRequest() {
+  const { apiClient } = useGitHubAuth();
+  
+  const execute = useCallback(async (
+    owner: string, 
+    repo: string, 
+    pullNumber: number,
+    mergeRequest?: {
+      commit_title?: string;
+      commit_message?: string;
+      sha?: string;
+      merge_method?: 'merge' | 'squash' | 'rebase';
+    }
+  ) => {
+    if (!apiClient) throw new Error('Not authenticated');
+    return apiClient.mergePullRequest(owner, repo, pullNumber, mergeRequest);
+  }, [apiClient]);
+
+  return useGitHubApi(execute);
+}

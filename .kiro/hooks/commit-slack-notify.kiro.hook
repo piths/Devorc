@@ -1,0 +1,17 @@
+{
+  "enabled": true,
+  "name": "Commit Slack Notification",
+  "description": "Monitors the Git repository for new commits and sends notifications to Slack when commits are detected",
+  "version": "1",
+  "when": {
+    "type": "userTriggered",
+    "patterns": [
+      ".git/logs/HEAD",
+      ".git/refs/heads/*"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "A new commit has been detected in the repository. Please send a notification to Slack with the commit details including the commit hash, author, message, and timestamp. Format the message in a user-friendly way for the development team."
+  }
+}

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useGitHubAuth } from '@/contexts/GitHubAuthContext';
-import { GitHubRepository, GitHubCommit, GitHubIssue, GitHubPullRequest } from '@/types/github';
+import { GitHubRepository, GitHubCommit, GitHubIssue, GitHubPullRequest, GitHubBranch } from '@/types/github';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -18,6 +18,7 @@ import {
   GitCommit,
   AlertCircle,
   GitPullRequest,
+  GitBranch,
   Lock,
   Globe,
   RefreshCw
@@ -26,6 +27,9 @@ import { formatDistanceToNow } from 'date-fns';
 import { CommitList } from './commit-list';
 import { IssueList } from './issue-list';
 import { PullRequestList } from './pull-request-list';
+import { BranchList } from './branch-list';
+import { PullRequestManager } from './pull-request-manager';
+import { SlackNotificationPanel } from '@/components/slack';
 
 interface RepositoryDetailProps {
   repository: GitHubRepository;
@@ -40,16 +44,19 @@ export function RepositoryDetail({ repository, onBack, className }: RepositoryDe
   const [commits, setCommits] = useState<GitHubCommit[]>([]);
   const [issues, setIssues] = useState<GitHubIssue[]>([]);
   const [pullRequests, setPullRequests] = useState<GitHubPullRequest[]>([]);
+  const [branches, setBranches] = useState<GitHubBranch[]>([]);
   
   // Loading states
   const [commitsLoading, setCommitsLoading] = useState(false);
   const [issuesLoading, setIssuesLoading] = useState(false);
   const [pullRequestsLoading, setPullRequestsLoading] = useState(false);
+  const [branchesLoading, setBranchesLoading] = useState(false);
   
   // Error states
   const [commitsError, setCommitsError] = useState<string | null>(null);
   const [issuesError, setIssuesError] = useState<string | null>(null);
   const [pullRequestsError, setPullRequestsError] = useState<string | null>(null);
+  const [branchesError, setBranchesError] = useState<string | null>(null);
 
   const [owner, repo] = repository.full_name.split('/');
   const updatedAt = new Date(repository.updated_at);
@@ -59,6 +66,7 @@ export function RepositoryDetail({ repository, onBack, className }: RepositoryDe
     loadCommits();
     loadIssues();
     loadPullRequests();
+    loadBranches();
   }, [repository.id]);
 
   const loadCommits = async () => {
@@ -120,10 +128,78 @@ export function RepositoryDetail({ repository, onBack, className }: RepositoryDe
     }
   };
 
+  const loadBranches = async () => {
+    if (!apiClient) return;
+
+    try {
+      setBranchesLoading(true);
+      setBranchesError(null);
+      
+      const branchesData = await apiClient.getBranches(owner, repo, {
+        per_page: 50
+      });
+      
+      setBranches(branchesData);
+    } catch (err) {
+      setBranchesError(err instanceof Error ? err.message : 'Failed to load branches');
+    } finally {
+      setBranchesLoading(false);
+    }
+  };
+
+  // Branch management functions
+  const handleCreateBranch = async (branchName: string, fromBranch: string) => {
+    if (!apiClient) return;
+
+    // Find the SHA of the from branch
+    const fromBranchData = branches.find(b => b.name === fromBranch);
+    if (!fromBranchData) {
+      throw new Error(`Branch ${fromBranch} not found`);
+    }
+
+    await apiClient.createBranch(owner, repo, branchName, fromBranchData.commit.sha);
+    await loadBranches(); // Refresh branches list
+  };
+
+  const handleDeleteBranch = async (branchName: string) => {
+    if (!apiClient) return;
+    
+    await apiClient.deleteBranch(owner, repo, branchName);
+    await loadBranches(); // Refresh branches list
+  };
+
+  // Pull request management functions
+  const handleCreatePullRequest = async (title: string, head: string, base: string, body?: string) => {
+    if (!apiClient) return;
+
+    await apiClient.createPullRequest(owner, repo, {
+      title,
+      head,
+      base,
+      body,
+    });
+    await loadPullRequests(); // Refresh PR list
+  };
+
+  const handleMergePullRequest = async (pullNumber: number, mergeMethod: 'merge' | 'squash' | 'rebase') => {
+    if (!apiClient) return;
+
+    await apiClient.mergePullRequest(owner, repo, pullNumber, { merge_method: mergeMethod });
+    await loadPullRequests(); // Refresh PR list
+  };
+
+  const handleClosePullRequest = async (pullNumber: number) => {
+    if (!apiClient) return;
+
+    await apiClient.closePullRequest(owner, repo, pullNumber);
+    await loadPullRequests(); // Refresh PR list
+  };
+
   const handleRefreshAll = () => {
     loadCommits();
     loadIssues();
     loadPullRequests();
+    loadBranches();
   };
 
   return (
@@ -142,9 +218,9 @@ export function RepositoryDetail({ repository, onBack, className }: RepositoryDe
             variant="outline" 
             size="sm"
             onClick={handleRefreshAll}
-            disabled={commitsLoading || issuesLoading || pullRequestsLoading}
+            disabled={commitsLoading || issuesLoading || pullRequestsLoading || branchesLoading}
           >
-            <RefreshCw className={`h-4 w-4 mr-2 ${(commitsLoading || issuesLoading || pullRequestsLoading) ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`h-4 w-4 mr-2 ${(commitsLoading || issuesLoading || pullRequestsLoading || branchesLoading) ? 'animate-spin' : ''}`} />
             Refresh
           </Button>
           
@@ -227,11 +303,16 @@ export function RepositoryDetail({ repository, onBack, className }: RepositoryDe
 
       {/* Tabs for different views */}
       <Tabs defaultValue="commits" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="commits" className="flex items-center gap-1 sm:gap-2">
             <GitCommit className="h-4 w-4" />
             <span className="hidden sm:inline">Commits</span>
             <span className="sm:hidden">Commits</span>
+          </TabsTrigger>
+          <TabsTrigger value="branches" className="flex items-center gap-1 sm:gap-2">
+            <GitBranch className="h-4 w-4" />
+            <span className="hidden sm:inline">Branches ({branches.length})</span>
+            <span className="sm:hidden">Branches</span>
           </TabsTrigger>
           <TabsTrigger value="issues" className="flex items-center gap-1 sm:gap-2">
             <AlertCircle className="h-4 w-4" />
@@ -240,8 +321,18 @@ export function RepositoryDetail({ repository, onBack, className }: RepositoryDe
           </TabsTrigger>
           <TabsTrigger value="pulls" className="flex items-center gap-1 sm:gap-2">
             <GitPullRequest className="h-4 w-4" />
-            <span className="hidden sm:inline">Pull Requests ({pullRequests.length})</span>
+            <span className="hidden sm:inline">PRs ({pullRequests.length})</span>
             <span className="sm:hidden">PRs</span>
+          </TabsTrigger>
+          <TabsTrigger value="pr-manager" className="flex items-center gap-1 sm:gap-2">
+            <GitPullRequest className="h-4 w-4" />
+            <span className="hidden sm:inline">Manage PRs</span>
+            <span className="sm:hidden">Manage</span>
+          </TabsTrigger>
+          <TabsTrigger value="notifications" className="flex items-center gap-1 sm:gap-2">
+            <Eye className="h-4 w-4" />
+            <span className="hidden sm:inline">Notifications</span>
+            <span className="sm:hidden">Notify</span>
           </TabsTrigger>
         </TabsList>
 
@@ -251,6 +342,22 @@ export function RepositoryDetail({ repository, onBack, className }: RepositoryDe
             loading={commitsLoading}
             error={commitsError}
             onRetry={loadCommits}
+            repositoryName={repository.name}
+            repositoryUrl={repository.html_url}
+            branch={repository.default_branch}
+          />
+        </TabsContent>
+
+        <TabsContent value="branches">
+          <BranchList 
+            branches={branches}
+            loading={branchesLoading}
+            error={branchesError}
+            onRetry={loadBranches}
+            onCreateBranch={handleCreateBranch}
+            onDeleteBranch={handleDeleteBranch}
+            repositoryUrl={repository.html_url}
+            defaultBranch={repository.default_branch}
           />
         </TabsContent>
 
@@ -271,6 +378,30 @@ export function RepositoryDetail({ repository, onBack, className }: RepositoryDe
             error={pullRequestsError}
             onRetry={loadPullRequests}
             repositoryUrl={repository.html_url}
+          />
+        </TabsContent>
+
+        <TabsContent value="pr-manager">
+          <PullRequestManager 
+            pullRequests={pullRequests}
+            branches={branches}
+            loading={pullRequestsLoading}
+            error={pullRequestsError}
+            onRetry={loadPullRequests}
+            onCreatePullRequest={handleCreatePullRequest}
+            onMergePullRequest={handleMergePullRequest}
+            onClosePullRequest={handleClosePullRequest}
+            repositoryUrl={repository.html_url}
+            defaultBranch={repository.default_branch}
+          />
+        </TabsContent>
+
+        <TabsContent value="notifications">
+          <SlackNotificationPanel
+            commits={commits}
+            repositoryName={repository.name}
+            repositoryUrl={repository.html_url}
+            branch={repository.default_branch}
           />
         </TabsContent>
       </Tabs>

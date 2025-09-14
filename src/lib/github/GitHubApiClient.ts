@@ -4,8 +4,13 @@ import {
   GitHubIssue,
   GitHubCommit,
   GitHubPullRequest,
+  GitHubBranch,
   CreateIssueRequest,
   UpdateIssueRequest,
+  CreateBranchRequest,
+  CreatePullRequestRequest,
+  UpdatePullRequestRequest,
+  MergePullRequestRequest,
   AuthResult,
   GitHubConnection,
   GitHubApiError,
@@ -313,5 +318,125 @@ export class GitHubApiClient {
     
     this.rateLimitInfo = response.rate;
     return response.rate;
+  }
+
+  // Branch Management Methods
+  async getBranches(
+    owner: string,
+    repo: string,
+    options: {
+      protected?: boolean;
+      per_page?: number;
+      page?: number;
+    } = {}
+  ): Promise<GitHubBranch[]> {
+    const params = new URLSearchParams();
+    
+    if (options.protected !== undefined) params.append('protected', options.protected.toString());
+    if (options.per_page) params.append('per_page', options.per_page.toString());
+    if (options.page) params.append('page', options.page.toString());
+
+    const queryString = params.toString();
+    const endpoint = `/repos/${owner}/${repo}/branches${queryString ? `?${queryString}` : ''}`;
+
+    return this.makeRequest<GitHubBranch[]>(endpoint);
+  }
+
+  async getBranch(owner: string, repo: string, branch: string): Promise<GitHubBranch> {
+    return this.makeRequest<GitHubBranch>(`/repos/${owner}/${repo}/branches/${branch}`);
+  }
+
+  async createBranch(
+    owner: string,
+    repo: string,
+    branchName: string,
+    fromSha: string
+  ): Promise<{ ref: string; url: string; object: { sha: string; type: string; url: string } }> {
+    const request: CreateBranchRequest = {
+      ref: `refs/heads/${branchName}`,
+      sha: fromSha,
+    };
+
+    return this.makeRequest(`/repos/${owner}/${repo}/git/refs`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(request),
+    });
+  }
+
+  async deleteBranch(owner: string, repo: string, branch: string): Promise<void> {
+    await this.makeRequest(`/repos/${owner}/${repo}/git/refs/heads/${branch}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // Pull Request Management Methods
+  async createPullRequest(
+    owner: string,
+    repo: string,
+    pullRequest: CreatePullRequestRequest
+  ): Promise<GitHubPullRequest> {
+    return this.makeRequest<GitHubPullRequest>(`/repos/${owner}/${repo}/pulls`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(pullRequest),
+    });
+  }
+
+  async updatePullRequest(
+    owner: string,
+    repo: string,
+    pullNumber: number,
+    updates: UpdatePullRequestRequest
+  ): Promise<GitHubPullRequest> {
+    return this.makeRequest<GitHubPullRequest>(`/repos/${owner}/${repo}/pulls/${pullNumber}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(updates),
+    });
+  }
+
+  async mergePullRequest(
+    owner: string,
+    repo: string,
+    pullNumber: number,
+    mergeRequest: MergePullRequestRequest = {}
+  ): Promise<{ sha: string; merged: boolean; message: string }> {
+    return this.makeRequest(`/repos/${owner}/${repo}/pulls/${pullNumber}/merge`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(mergeRequest),
+    });
+  }
+
+  async closePullRequest(
+    owner: string,
+    repo: string,
+    pullNumber: number
+  ): Promise<GitHubPullRequest> {
+    return this.updatePullRequest(owner, repo, pullNumber, { state: 'closed' });
+  }
+
+  async requestReviewers(
+    owner: string,
+    repo: string,
+    pullNumber: number,
+    reviewers: string[]
+  ): Promise<GitHubPullRequest> {
+    return this.makeRequest<GitHubPullRequest>(`/repos/${owner}/${repo}/pulls/${pullNumber}/requested_reviewers`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ reviewers }),
+    });
   }
 }
