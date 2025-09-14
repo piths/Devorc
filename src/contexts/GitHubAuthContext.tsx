@@ -110,9 +110,12 @@ export function GitHubAuthProvider({ children }: GitHubAuthProviderProps) {
     // Clear any previous errors
     setError(null);
 
+    // Clear any existing state to prevent conflicts
+    sessionStorage.removeItem('github_oauth_state');
+
     const scope = 'repo,user,read:org';
     const redirectUri = `${window.location.origin}/auth/github/callback`;
-    const state = Math.random().toString(36).substring(2, 15);
+    const state = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
     
     // Store state for validation
     sessionStorage.setItem('github_oauth_state', state);
@@ -124,7 +127,11 @@ export function GitHubAuthProvider({ children }: GitHubAuthProviderProps) {
       `state=${state}`;
 
     console.log('Initiating GitHub OAuth:', { clientId: CLIENT_ID, redirectUri, state });
-    window.location.href = authUrl;
+    
+    // Small delay to ensure sessionStorage is set before redirect
+    setTimeout(() => {
+      window.location.href = authUrl;
+    }, 100);
   };
 
   const handleAuthCallback = async (code: string): Promise<AuthResult> => {

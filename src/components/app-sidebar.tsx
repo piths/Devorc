@@ -2,22 +2,24 @@
 
 import * as React from "react"
 import {
-  IconCamera,
+  IconBrandGithub,
   IconChartBar,
   IconDashboard,
-  IconDatabase,
-  IconFileAi,
-  IconFileDescription,
-  IconFileWord,
-  IconFolder,
+  IconKarate,
+  IconPalette,
+  IconRobot,
   IconHelp,
-  IconInnerShadowTop,
-  IconListDetails,
-  IconReport,
-  IconSearch,
   IconSettings,
+  IconSearch,
+  IconCode,
+  IconGitBranch,
+  IconBug,
+  IconGitPullRequest,
   IconUsers,
+  IconBolt,
 } from "@tabler/icons-react"
+
+import { Logo } from "@/components/logo"
 
 import { NavDocuments } from "@/components/nav-documents"
 import { NavMain } from "@/components/nav-main"
@@ -34,81 +36,76 @@ import {
 } from "@/components/ui/sidebar"
 
 const data = {
-  user: {
-    name: "shadcn",
-    email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
-  },
   navMain: [
     {
       title: "Dashboard",
-      url: "#",
+      url: "/dashboard",
       icon: IconDashboard,
+      isActive: true,
     },
     {
-      title: "Lifecycle",
+      title: "Smart Kanban",
       url: "#",
-      icon: IconListDetails,
+      icon: IconKarate,
+      badge: "Coming Soon",
+    },
+    {
+      title: "Project Canvas",
+      url: "#",
+      icon: IconPalette,
+      badge: "Coming Soon",
+    },
+    {
+      title: "AI Assistant",
+      url: "#",
+      icon: IconRobot,
+      badge: "Coming Soon",
+    },
+  ],
+  navGitHub: [
+    {
+      title: "Repositories",
+      icon: IconBrandGithub,
+      isActive: false,
+      url: "#",
+      items: [
+        {
+          title: "All Repositories",
+          url: "#",
+          icon: IconCode,
+        },
+        {
+          title: "Branches",
+          url: "#",
+          icon: IconGitBranch,
+        },
+        {
+          title: "Issues",
+          url: "#",
+          icon: IconBug,
+        },
+        {
+          title: "Pull Requests",
+          url: "#",
+          icon: IconGitPullRequest,
+        },
+      ],
     },
     {
       title: "Analytics",
-      url: "#",
       icon: IconChartBar,
-    },
-    {
-      title: "Projects",
-      url: "#",
-      icon: IconFolder,
-    },
-    {
-      title: "Team",
-      url: "#",
-      icon: IconUsers,
-    },
-  ],
-  navClouds: [
-    {
-      title: "Capture",
-      icon: IconCamera,
-      isActive: true,
       url: "#",
       items: [
         {
-          title: "Active Proposals",
+          title: "Code Metrics",
           url: "#",
         },
         {
-          title: "Archived",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Proposal",
-      icon: IconFileDescription,
-      url: "#",
-      items: [
-        {
-          title: "Active Proposals",
+          title: "Team Performance",
           url: "#",
         },
         {
-          title: "Archived",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Prompts",
-      icon: IconFileAi,
-      url: "#",
-      items: [
-        {
-          title: "Active Proposals",
-          url: "#",
-        },
-        {
-          title: "Archived",
+          title: "Project Health",
           url: "#",
         },
       ],
@@ -131,38 +128,38 @@ const data = {
       icon: IconSearch,
     },
   ],
-  documents: [
+  quickActions: [
     {
-      name: "Data Library",
+      name: "Create Issue",
       url: "#",
-      icon: IconDatabase,
+      icon: IconBolt,
     },
     {
-      name: "Reports",
+      name: "New Branch",
       url: "#",
-      icon: IconReport,
+      icon: IconGitBranch,
     },
     {
-      name: "Word Assistant",
+      name: "Team Invite",
       url: "#",
-      icon: IconFileWord,
+      icon: IconUsers,
     },
   ],
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
-    <Sidebar collapsible="offcanvas" {...props}>
+    <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
               asChild
-              className="data-[slot=sidebar-menu-button]:!p-1.5"
+              className="data-[slot=sidebar-menu-button]:!p-2"
             >
-              <a href="#">
-                <IconInnerShadowTop className="!size-5" />
-                <span className="text-base font-semibold">Acme Inc.</span>
+              <a href="/dashboard" className="flex items-center gap-2">
+                <Logo variant="icon" size="sm" />
+                <span className="text-base font-semibold">DevOrch</span>
               </a>
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -170,11 +167,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
-        <NavDocuments items={data.documents} />
+        <NavDocuments title="GitHub Integration" items={data.navGitHub} />
+        <NavDocuments title="Quick Actions" items={data.quickActions} />
         <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <NavUser />
       </SidebarFooter>
     </Sidebar>
   )

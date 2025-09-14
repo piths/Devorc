@@ -36,7 +36,19 @@ function GitHubCallbackContent() {
 
       // Validate state parameter
       const savedState = sessionStorage.getItem('github_oauth_state');
-      if (!savedState || savedState !== state) {
+      console.log('OAuth callback validation:', { 
+        receivedState: state, 
+        savedState, 
+        match: savedState === state 
+      });
+      
+      if (!savedState) {
+        setStatus('error');
+        setError('No authentication state found - please try logging in again');
+        return;
+      }
+      
+      if (savedState !== state) {
         setStatus('error');
         setError('Invalid state parameter - possible CSRF attack or expired session');
         return;

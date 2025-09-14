@@ -3,6 +3,7 @@
 import { IconCirclePlusFilled, IconMail, type Icon } from "@tabler/icons-react"
 
 import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 import {
   SidebarGroup,
   SidebarGroupContent,
@@ -18,6 +19,8 @@ export function NavMain({
     title: string
     url: string
     icon?: Icon
+    isActive?: boolean
+    badge?: string
   }[]
 }) {
   return (
@@ -45,9 +48,36 @@ export function NavMain({
         <SidebarMenu>
           {items.map((item) => (
             <SidebarMenuItem key={item.title}>
-              <SidebarMenuButton tooltip={item.title}>
-                {item.icon && <item.icon />}
-                <span>{item.title}</span>
+              <SidebarMenuButton 
+                tooltip={item.title}
+                isActive={item.isActive}
+                asChild={!!item.url && item.url !== "#"}
+              >
+                {item.url && item.url !== "#" ? (
+                  <a href={item.url} className="flex items-center justify-between w-full">
+                    <div className="flex items-center">
+                      {item.icon && <item.icon />}
+                      <span>{item.title}</span>
+                    </div>
+                    {item.badge && (
+                      <Badge variant="secondary" className="ml-auto text-xs">
+                        {item.badge}
+                      </Badge>
+                    )}
+                  </a>
+                ) : (
+                  <div className="flex items-center justify-between w-full">
+                    <div className="flex items-center">
+                      {item.icon && <item.icon />}
+                      <span>{item.title}</span>
+                    </div>
+                    {item.badge && (
+                      <Badge variant="secondary" className="ml-auto text-xs">
+                        {item.badge}
+                      </Badge>
+                    )}
+                  </div>
+                )}
               </SidebarMenuButton>
             </SidebarMenuItem>
           ))}
