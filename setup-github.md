@@ -39,11 +39,11 @@ AI-powered developer productivity platform built with Kiro AI - featuring GitHub
 
 ### README Highlights
 The repository showcases:
-- ✅ Complete development process documentation
+- ✅ Complete development process documentation in `.kiro/specs/`
 - ✅ Structured AI-assisted development with Kiro
-- ✅ Working Next.js application foundation
+- ✅ Working Next.js application at root level
 - ✅ Requirements → Design → Tasks → Implementation flow
-- ✅ Ready for continued development
+- ✅ Ready for continued development and deployment
 
 ## Next Steps After GitHub Setup
 

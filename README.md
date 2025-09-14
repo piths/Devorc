@@ -57,17 +57,12 @@ This project was built using **Kiro AI** with a structured spec-driven developme
    cd devorch-suite
    ```
 
-2. **Navigate to the application**
-   ```bash
-   cd devorch-suite
-   ```
-
-3. **Install dependencies**
+2. **Install dependencies**
    ```bash
    npm install
    ```
 
-4. **Configure environment variables**
+3. **Configure environment variables**
    ```bash
    cp .env.example .env.local
    ```
@@ -80,12 +75,12 @@ This project was built using **Kiro AI** with a structured spec-driven developme
    NEXTAUTH_SECRET=your_nextauth_secret
    ```
 
-5. **Run the development server**
+4. **Run the development server**
    ```bash
    npm run dev
    ```
 
-6. **Open [http://localhost:3000](http://localhost:3000)**
+5. **Open [http://localhost:3000](http://localhost:3000)**
 
 ## 📁 Project Structure
 
@@ -95,19 +90,18 @@ This project was built using **Kiro AI** with a structured spec-driven developme
 │       ├── requirements.md         # User stories & acceptance criteria
 │       ├── design.md              # System architecture & design
 │       └── tasks.md               # Implementation task breakdown
-├── devorch-suite/                  # Next.js application
-│   ├── src/
-│   │   ├── app/                   # Next.js App Router pages
-│   │   ├── components/            # React components
-│   │   │   ├── ui/               # shadcn/ui components
-│   │   │   ├── layout/           # Layout components
-│   │   │   └── modules/          # Feature modules
-│   │   ├── hooks/                # Custom React hooks
-│   │   ├── lib/                  # API clients & utilities
-│   │   ├── types/                # TypeScript definitions
-│   │   └── utils/                # Utility functions
-│   ├── package.json
-│   └── README.md                 # Application-specific docs
+├── src/                            # Next.js application source
+│   ├── app/                       # Next.js App Router pages
+│   ├── components/                # React components
+│   │   ├── ui/                   # shadcn/ui components
+│   │   ├── layout/               # Layout components
+│   │   └── modules/              # Feature modules
+│   ├── hooks/                    # Custom React hooks
+│   ├── lib/                      # API clients & utilities
+│   ├── types/                    # TypeScript definitions
+│   └── utils/                    # Utility functions
+├── public/                        # Static assets
+├── package.json                   # Dependencies and scripts
 └── README.md                     # This file
 ```
 
