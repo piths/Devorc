@@ -67,11 +67,11 @@ const data = {
       title: "Repositories",
       icon: IconBrandGithub,
       isActive: false,
-      url: "#",
+      url: "/dashboard/github",
       items: [
         {
           title: "All Repositories",
-          url: "#",
+          url: "/dashboard/github",
           icon: IconCode,
         },
         {
