@@ -22,7 +22,8 @@ const createEmptyProject = (): CanvasProject => ({
 });
 
 export const useCanvas = (): CanvasState & CanvasActions => {
-  const [project, setProject] = useState<CanvasProject | null>(createEmptyProject());
+  const initialProject = createEmptyProject();
+  const [project, setProject] = useState<CanvasProject | null>(initialProject);
   const [selectedElements, setSelectedElements] = useState<string[]>([]);
   const [tool, setTool] = useState<CanvasState['tool']>('select');
   const [viewport, setViewport] = useState<CanvasViewport>(initialViewport);
@@ -31,6 +32,8 @@ export const useCanvas = (): CanvasState & CanvasActions => {
   const [connectionStart, setConnectionStart] = useState<string | null>(null);
   const [isGrouping] = useState(false);
   const [isMultiSelecting] = useState(false);
+  const [history, setHistory] = useState<CanvasProject[]>([initialProject]);
+  const [historyIndex, setHistoryIndex] = useState(0);
 
   const createElement = useCallback((elementData: Partial<CanvasElement>) => {
     if (!project) return;
@@ -55,11 +58,13 @@ export const useCanvas = (): CanvasState & CanvasActions => {
 
     setProject(prev => {
       if (!prev) return prev;
-      return {
+      const newProject = {
         ...prev,
         elements: [...prev.elements, newElement],
         updatedAt: new Date(),
       };
+      addToHistory(newProject);
+      return newProject;
     });
   }, [project]);
 
@@ -68,7 +73,7 @@ export const useCanvas = (): CanvasState & CanvasActions => {
 
     setProject(prev => {
       if (!prev) return prev;
-      return {
+      const newProject = {
         ...prev,
         elements: prev.elements.map(element =>
           element.id === elementId
@@ -77,6 +82,8 @@ export const useCanvas = (): CanvasState & CanvasActions => {
         ),
         updatedAt: new Date(),
       };
+      addToHistory(newProject);
+      return newProject;
     });
   }, [project]);
 
@@ -85,11 +92,13 @@ export const useCanvas = (): CanvasState & CanvasActions => {
 
     setProject(prev => {
       if (!prev) return prev;
-      return {
+      const newProject = {
         ...prev,
         elements: prev.elements.filter(element => element.id !== elementId),
         updatedAt: new Date(),
       };
+      addToHistory(newProject);
+      return newProject;
     });
 
     setSelectedElements(prev => prev.filter(id => id !== elementId));
@@ -150,21 +159,31 @@ export const useCanvas = (): CanvasState & CanvasActions => {
     
     if (!fromElement || !toElement) return;
 
-    // Check if connection already exists
+    // Allow multiple connections to the same element (for branching)
+    // Only prevent exact duplicate connections
     const existingConnection = fromElement.connections.find(
-      conn => conn.targetElementId === toElementId
+      conn => conn.targetElementId === toElementId && conn.type === 'arrow'
     );
     
-    if (existingConnection) return;
+    if (existingConnection) {
+      // If connection exists, allow creating a different type or style
+      console.log('Connection already exists, consider adding different connection type');
+      return;
+    }
+
+    // Generate different colors for multiple connections from same element
+    const connectionCount = fromElement.connections.length;
+    const colors = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
+    const connectionColor = colors[connectionCount % colors.length];
 
     const newConnection = {
       id: crypto.randomUUID(),
       targetElementId: toElementId,
       type: 'arrow' as const,
       style: {
-        stroke: '#6366f1',
+        stroke: connectionColor,
         strokeWidth: 2,
-        fill: '#6366f1',
+        fill: connectionColor,
       },
     };
 
@@ -199,17 +218,67 @@ export const useCanvas = (): CanvasState & CanvasActions => {
     setConnectionStart(null);
   }, []);
 
-  const exportCanvas = useCallback((format: 'png' | 'svg', stageRef: React.RefObject<Konva.Stage>) => {
-    if (!stageRef.current || !project) return;
+  const exportCanvas = useCallback((format: 'png' | 'svg' | 'json', stageRef?: React.RefObject<Konva.Stage>) => {
+    if (!project) return;
 
+    if (format === 'json') {
+      // Export project data as JSON
+      const dataStr = JSON.stringify(project, null, 2);
+      const dataBlob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(dataBlob);
+      
+      const link = document.createElement('a');
+      link.download = `${project.name || 'canvas'}.json`;
+      link.href = url;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      return;
+    }
+
+    if (!stageRef?.current) return;
     const stage = stageRef.current;
     
     if (format === 'png') {
+      // Reset stage position and scale for export
+      const originalPos = { x: stage.x(), y: stage.y() };
+      const originalScale = { x: stage.scaleX(), y: stage.scaleY() };
+      
+      // Calculate bounds of all elements
+      const elements = project.elements;
+      if (elements.length === 0) return;
+      
+      let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+      elements.forEach(element => {
+        minX = Math.min(minX, element.position.x);
+        minY = Math.min(minY, element.position.y);
+        maxX = Math.max(maxX, element.position.x + element.size.width);
+        maxY = Math.max(maxY, element.position.y + element.size.height);
+      });
+      
+      // Add padding
+      const padding = 50;
+      minX -= padding;
+      minY -= padding;
+      maxX += padding;
+      maxY += padding;
+      
+      // Set stage to fit content
+      stage.scale({ x: 1, y: 1 });
+      stage.position({ x: -minX, y: -minY });
+      
       const dataURL = stage.toDataURL({
         mimeType: 'image/png',
         quality: 1,
-        pixelRatio: 2, // Higher resolution
+        pixelRatio: 2,
+        width: maxX - minX,
+        height: maxY - minY,
       });
+      
+      // Restore original position and scale
+      stage.position(originalPos);
+      stage.scale(originalScale);
       
       // Create download link
       const link = document.createElement('a');
@@ -220,19 +289,74 @@ export const useCanvas = (): CanvasState & CanvasActions => {
       document.body.removeChild(link);
     } else if (format === 'svg') {
       // For SVG export, we need to recreate the canvas as SVG
-      stage.toCanvas({
-        callback: (canvas: HTMLCanvasElement) => {
-          const dataURL = canvas.toDataURL('image/svg+xml');
-          const link = document.createElement('a');
-          link.download = `${project.name || 'canvas'}.svg`;
-          link.href = dataURL;
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-        }
+      const dataURL = stage.toDataURL({
+        mimeType: 'image/svg+xml',
+        quality: 1,
       });
+      
+      const link = document.createElement('a');
+      link.download = `${project.name || 'canvas'}.svg`;
+      link.href = dataURL;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     }
   }, [project]);
+
+  const importProject = useCallback((file: File) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const projectData = JSON.parse(e.target?.result as string);
+        setProject(projectData);
+        setSelectedElements([]);
+        setViewport(prev => ({ ...prev, ...projectData.viewport }));
+        // Reset history when importing
+        setHistory([projectData]);
+        setHistoryIndex(0);
+      } catch (error) {
+        console.error('Failed to import project:', error);
+      }
+    };
+    reader.readAsText(file);
+  }, []);
+
+  // Add to history when project changes
+  const addToHistory = useCallback((newProject: CanvasProject) => {
+    setHistory(prev => {
+      const newHistory = prev.slice(0, historyIndex + 1);
+      newHistory.push(newProject);
+      // Limit history to 50 items
+      if (newHistory.length > 50) {
+        newHistory.shift();
+        setHistoryIndex(curr => curr - 1);
+        return newHistory;
+      }
+      return newHistory;
+    });
+    setHistoryIndex(prev => prev + 1);
+  }, [historyIndex]);
+
+  const undo = useCallback(() => {
+    if (historyIndex > 0) {
+      const previousProject = history[historyIndex - 1];
+      setProject(previousProject);
+      setHistoryIndex(prev => prev - 1);
+      setSelectedElements([]);
+    }
+  }, [history, historyIndex]);
+
+  const redo = useCallback(() => {
+    if (historyIndex < history.length - 1) {
+      const nextProject = history[historyIndex + 1];
+      setProject(nextProject);
+      setHistoryIndex(prev => prev + 1);
+      setSelectedElements([]);
+    }
+  }, [history, historyIndex]);
+
+  const canUndo = historyIndex > 0;
+  const canRedo = historyIndex < history.length - 1;
 
   return {
     project,
@@ -259,5 +383,10 @@ export const useCanvas = (): CanvasState & CanvasActions => {
     finishConnection,
     cancelConnection,
     exportCanvas,
+    importProject,
+    undo,
+    redo,
+    canUndo,
+    canRedo,
   };
 };

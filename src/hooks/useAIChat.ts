@@ -158,9 +158,14 @@ export function useAIChat() {
       }
 
       // Use API route for all OpenAI requests
+      console.log('Session codebase context available:', !!session.codebaseContext);
+      console.log('Session codebase files count:', session.codebaseContext?.files?.length || 0);
+      
       if (session.codebaseContext) {
+        console.log('Using contextual API with codebase context');
         // Use enhanced contextual response with code analysis
         const relevantFiles = analysisService.findRelevantFiles(enhancedContent, session.codebaseContext);
+        console.log('Relevant files found:', relevantFiles.length);
         
         const apiResponse = await fetch('/api/chat', {
           method: 'POST',
@@ -183,6 +188,7 @@ export function useAIChat() {
 
         response = await apiResponse.json();
       } else {
+        console.log('No codebase context available, using basic chat');
         // Fallback to basic chat completion with enhanced content
         const messagesWithContext = [...updatedSession.messages];
         // Replace the last user message with enhanced content
@@ -470,29 +476,39 @@ You can now ask me specific questions about your code, request refactoring sugge
     // Persist the session update first
     await storageManager.current.saveChatSession(updatedSession);
 
-    // Add a small system message so the chat history explicitly reflects
-    // that the AI now has access to the loaded codebase. This helps steer
-    // the model away from disclaimers and gives users a clear signal.
-    const contextIntroMessage: ChatMessage = {
-      id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      role: 'system',
-      content: `Repository codebase attached: ${codebaseContext.files.length} files available for analysis. Ask about specific files, components, or patterns.`,
+    // Update local state first
+    setActiveSession(updatedSession);
+    setSessions(prev => prev.map(s => s.id === activeSession.id ? updatedSession : s));
+
+    // Add immediate AI ready message (fast, no API call needed)
+    const aiReadyMessage: ChatMessage = {
+      id: `msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+      role: 'assistant',
+      content: `🚀 **I'm ready!** I now have access to your **${codebaseContext.repository?.name || 'repository'}** codebase with **${codebaseContext.files.length} files**. 
+
+I can help you with:
+• Code analysis and explanations
+• Finding specific components or functions  
+• Suggesting improvements and best practices
+• Debugging and troubleshooting
+• Architecture and design questions
+
+What would you like to explore in your codebase?`,
       timestamp: new Date(),
     };
 
-    await storageManager.current.addMessageToSession(updatedSession.id, contextIntroMessage);
+    await storageManager.current.addMessageToSession(updatedSession.id, aiReadyMessage);
 
-    // Update local state
-    setActiveSession({
+    // Create the final session with the AI message
+    const finalSession = {
       ...updatedSession,
-      messages: [...updatedSession.messages, contextIntroMessage],
-    });
-    setSessions(prev => prev.map(s => s.id === activeSession.id ? {
-      ...updatedSession,
-      messages: [...updatedSession.messages, contextIntroMessage],
-    } : s));
+      messages: [...updatedSession.messages, aiReadyMessage],
+    };
+
+    setActiveSession(finalSession);
+    setSessions(prev => prev.map(s => s.id === activeSession.id ? finalSession : s));
     
-    return updatedSession;
+    return finalSession;
   }, [activeSession]);
 
   const analyzeCurrentFile = useCallback(async () => {

@@ -12,7 +12,7 @@ export const CanvasPage: React.FC = () => {
 
   return (
     <CanvasProvider>
-      <div className="flex flex-col h-full min-h-[calc(100vh-var(--header-height))] bg-gray-900">
+      <div className="flex flex-col h-full min-h-[calc(100vh-var(--header-height))] bg-background">
         {/* Toolbar */}
         <CanvasToolbar stageRef={stageRef} />
         
@@ -27,7 +27,7 @@ export const CanvasPage: React.FC = () => {
           </div>
           
           {/* Properties Panel */}
-          <div className="w-64 border-l border-gray-700 bg-gray-800 p-4">
+          <div className="w-64 border-l border-border bg-card p-4">
             <CanvasProperties />
           </div>
         </div>

@@ -31,7 +31,7 @@ export interface CanvasViewport {
 export interface CanvasState {
   project: CanvasProject | null;
   selectedElements: string[];
-  tool: 'select' | 'text' | 'rectangle' | 'circle' | 'connector' | 'line' | 'polygon' | 'image' | 'sticky-note' | 'flowchart-shape';
+  tool: 'select' | 'hand' | 'text' | 'rectangle' | 'circle' | 'connector' | 'line' | 'polygon' | 'image' | 'sticky-note' | 'flowchart-shape' | 'pen';
   viewport: CanvasViewport;
   isDragging: boolean;
   isDrawing: boolean;
@@ -55,5 +55,10 @@ export interface CanvasActions {
   startConnection: (elementId: string) => void;
   finishConnection: (elementId: string) => void;
   cancelConnection: () => void;
-  exportCanvas: (format: 'png' | 'svg', stageRef: React.RefObject<Konva.Stage>) => void;
+  exportCanvas: (format: 'png' | 'svg' | 'json', stageRef?: React.RefObject<Konva.Stage>) => void;
+  importProject: (file: File) => void;
+  undo: () => void;
+  redo: () => void;
+  canUndo: boolean;
+  canRedo: boolean;
 }

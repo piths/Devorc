@@ -47,14 +47,22 @@ export function useRepositoryCodebase(): UseRepositoryCodebaseResult {
   }, [connection?.accessToken]);
 
   const fetchCodebase = useCallback(async (repository: GitHubRepository): Promise<CodebaseContext> => {
+    console.log('fetchCodebase called with:', repository.full_name);
+    
     const service = getService();
+    console.log('Service available:', !!service);
+    console.log('Connection token available:', !!connection?.accessToken);
+    
     if (!service) {
+      console.error('No service available - authentication required');
       throw new Error('GitHub authentication required');
     }
 
     try {
       setIsLoading(true);
       setError(null);
+      console.log('Starting codebase fetch...');
+      
       setProgress({
         current: 0,
         total: 100,
@@ -62,7 +70,9 @@ export function useRepositoryCodebase(): UseRepositoryCodebaseResult {
       });
 
       // First, estimate the size
+      console.log('Estimating codebase size...');
       const sizeEstimate = await service.estimateCodebaseSize(repository);
+      console.log('Size estimate:', sizeEstimate);
       
       setProgress({
         current: 10,
@@ -71,10 +81,12 @@ export function useRepositoryCodebase(): UseRepositoryCodebaseResult {
       });
 
       // Fetch the codebase with progress updates
+      console.log('Fetching codebase content...');
       const context = await service.fetchRepositoryCodebase(repository, {
         maxFiles: 100,
         maxFileSize: 1024 * 1024, // 1MB
       });
+      console.log('Codebase fetched successfully:', context);
 
       setProgress({
         current: 90,
@@ -90,11 +102,14 @@ export function useRepositoryCodebase(): UseRepositoryCodebaseResult {
         message: `Successfully loaded ${context.files.length} files`,
       });
 
-      // Clear progress after a short delay
-      setTimeout(() => setProgress(null), 2000);
+      // Clear progress immediately after success
+      setTimeout(() => {
+        setProgress(null);
+      }, 100);
 
       return context;
     } catch (err) {
+      console.error('Error in fetchCodebase:', err);
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch codebase';
       setError(errorMessage);
       setProgress(null);
@@ -102,7 +117,7 @@ export function useRepositoryCodebase(): UseRepositoryCodebaseResult {
     } finally {
       setIsLoading(false);
     }
-  }, [getService]);
+  }, [getService, connection?.accessToken]);
 
   const estimateSize = useCallback(async (repository: GitHubRepository) => {
     const service = getService();

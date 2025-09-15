@@ -4,7 +4,7 @@ export interface UserSession {
   id: string;
   githubToken?: string;
   preferences: UserPreferences;
-  lastActive: Date;
+  lastActive: Date | string;
 }
 
 export interface UserPreferences {
@@ -20,7 +20,7 @@ export type ModuleType = 'dashboard' | 'kanban' | 'canvas' | 'chat';
 export interface GitHubConnection {
   accessToken: string;
   refreshToken?: string;
-  expiresAt: Date;
+  expiresAt: Date | string;
   scopes: string[];
   user: GitHubUser;
 }
@@ -41,7 +41,7 @@ export interface Repository {
   language: string;
   starCount: number;
   forkCount: number;
-  lastUpdated: Date;
+  lastUpdated: Date | string;
   recentCommits: Commit[];
   openIssues: Issue[];
   pullRequests: PullRequest[];
@@ -51,7 +51,7 @@ export interface Commit {
   id: string;
   message: string;
   author: string;
-  date: Date;
+  date: Date | string;
   sha: string;
 }
 
@@ -63,8 +63,8 @@ export interface Issue {
   state: 'open' | 'closed';
   labels: Label[];
   assignee?: string;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: Date | string;
+  updatedAt: Date | string;
 }
 
 export interface PullRequest {
@@ -73,7 +73,7 @@ export interface PullRequest {
   title: string;
   state: 'open' | 'closed' | 'merged';
   author: string;
-  createdAt: Date;
+  createdAt: Date | string;
 }
 
 export interface Label {
@@ -94,8 +94,8 @@ export interface KanbanBoard {
     repo: string;
     syncConfig: SyncConfiguration;
   };
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: Date | string;
+  updatedAt: Date | string;
 }
 
 export interface Column {
@@ -111,7 +111,7 @@ export interface Card {
   description: string;
   labels: Label[];
   assignee?: string;
-  dueDate?: Date;
+  dueDate?: Date | string;
   githubIssueId?: string;
   githubRepo?: { owner: string; repo: string };
 }
@@ -135,8 +135,8 @@ export interface CanvasProject {
     y: number;
     zoom: number;
   };
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: Date | string;
+  updatedAt: Date | string;
 }
 
 export interface CanvasElement {
@@ -150,7 +150,7 @@ export interface CanvasElement {
   connections: Connection[];
 }
 
-export type ElementType = 'text' | 'rectangle' | 'circle' | 'arrow' | 'connector' | 'line' | 'polygon' | 'image' | 'group' | 'sticky-note' | 'flowchart-shape';
+export type ElementType = 'text' | 'rectangle' | 'circle' | 'arrow' | 'connector' | 'line' | 'polygon' | 'image' | 'group' | 'sticky-note' | 'flowchart-shape' | 'pen-drawing';
 
 export interface Point {
   x: number;

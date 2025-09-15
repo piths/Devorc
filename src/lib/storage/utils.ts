@@ -146,7 +146,7 @@ export function decompressData<T>(compressedData: string): T {
 // Backup and restore utilities
 export interface BackupData {
   version: string;
-  timestamp: Date;
+  timestamp: Date | string;
   userSessions: UserSession[];
   kanbanBoards: KanbanBoard[];
   canvasProjects: CanvasProject[];

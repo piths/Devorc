@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { Send, Upload, FileText, Loader2, AlertCircle, RotateCcw } from 'lucide-react';
+import { Send, Upload, FileText, Loader2, AlertCircle, RotateCcw, Database, GitBranch } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,14 +9,23 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { useAIChat } from '@/hooks/useAIChat';
-import { ChatMessage } from '@/types/chat';
+import { ChatMessage, CodebaseContext } from '@/types/chat';
+import { GitHubRepository } from '@/types/github';
 import { cn } from '@/lib/utils';
 
 interface ChatInterfaceProps {
   className?: string;
+  selectedRepository?: GitHubRepository | null;
+  onLoadRepositoryCodebase?: () => void;
+  isLoadingCodebase?: boolean;
 }
 
-export function ChatInterface({ className }: ChatInterfaceProps) {
+export function ChatInterface({ 
+  className, 
+  selectedRepository, 
+  onLoadRepositoryCodebase, 
+  isLoadingCodebase = false 
+}: ChatInterfaceProps) {
   const [inputValue, setInputValue] = useState('');
   const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -86,11 +95,19 @@ export function ChatInterface({ className }: ChatInterfaceProps) {
     }
   };
 
-  const formatTimestamp = (timestamp: Date) => {
+  const formatTimestamp = (timestamp: Date | string) => {
+    // Handle both Date objects and string timestamps
+    const date = timestamp instanceof Date ? timestamp : new Date(timestamp);
+    
+    // Check if the date is valid
+    if (isNaN(date.getTime())) {
+      return 'Invalid time';
+    }
+    
     return new Intl.DateTimeFormat('en-US', {
       hour: '2-digit',
       minute: '2-digit',
-    }).format(timestamp);
+    }).format(date);
   };
 
   const renderMessage = (message: ChatMessage) => {
@@ -183,21 +200,44 @@ export function ChatInterface({ className }: ChatInterfaceProps) {
           <FileText className="w-5 h-5" />
           AI Chat Assistant
           <div className="ml-auto flex items-center gap-2">
+            {selectedRepository && (
+              <Badge variant="outline" className="text-xs flex items-center gap-1">
+                <GitBranch className="w-3 h-3" />
+                {selectedRepository.name}
+              </Badge>
+            )}
             {currentFileContext && (
               <Badge variant="outline" className="text-xs">
                 📄 {currentFileContext.filePath.split('/').pop()}
               </Badge>
             )}
             {activeSession?.codebaseContext && (
-              <Badge variant="secondary">
+              <Badge variant="secondary" className="flex items-center gap-1">
+                <Database className="w-3 h-3" />
                 {activeSession.codebaseContext.files.length} files loaded
               </Badge>
             )}
           </div>
         </CardTitle>
+        {selectedRepository && (
+          <div className="flex items-center gap-2 text-xs text-blue-600 dark:text-blue-400">
+            <GitBranch className="w-3 h-3" />
+            <span>Connected to {selectedRepository.full_name}</span>
+            {activeSession?.codebaseContext ? (
+              <span className="text-green-600 dark:text-green-400">• Codebase loaded</span>
+            ) : (
+              <span className="text-muted-foreground">• Ready to load codebase</span>
+            )}
+          </div>
+        )}
         {currentFileContext && (
           <div className="text-xs text-muted-foreground">
             Currently viewing: {currentFileContext.filePath} ({currentFileContext.language})
+          </div>
+        )}
+        {activeSession?.codebaseContext && !selectedRepository && (
+          <div className="text-xs text-green-600 dark:text-green-400">
+            Repository codebase attached: {activeSession.codebaseContext.repository?.name || 'Unknown'} - Ask about specific files, components, or patterns.
           </div>
         )}
       </CardHeader>
@@ -245,16 +285,42 @@ export function ChatInterface({ className }: ChatInterfaceProps) {
             <FileText className="w-12 h-12 text-muted-foreground mb-4" />
             <h3 className="text-lg font-medium mb-2">Start a conversation</h3>
             <p className="text-muted-foreground mb-4">
-              Ask questions about your code or upload files for analysis
+              Ask questions about your code or load a repository for AI analysis
             </p>
-            <Button
-              variant="outline"
-              onClick={() => fileInputRef.current?.click()}
-              className="gap-2"
-            >
-              <Upload className="w-4 h-4" />
-              Upload Code Files
-            </Button>
+            <div className="flex gap-2">
+              {selectedRepository && onLoadRepositoryCodebase ? (
+                <Button
+                  variant="default"
+                  onClick={() => {
+                    console.log('Load codebase button clicked (main) for:', selectedRepository.name);
+                    onLoadRepositoryCodebase();
+                  }}
+                  disabled={isLoadingCodebase}
+                  className="gap-2"
+                >
+                  {isLoadingCodebase ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Loading...
+                    </>
+                  ) : (
+                    <>
+                      <Database className="w-4 h-4" />
+                      Load {selectedRepository.name} to Codebase
+                    </>
+                  )}
+                </Button>
+              ) : (
+                <Button
+                  variant="outline"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="gap-2"
+                >
+                  <Upload className="w-4 h-4" />
+                  Upload Code Files
+                </Button>
+              )}
+            </div>
           </div>
         ) : (
           <ScrollArea className="flex-1 min-h-0 overflow-hidden" style={{ overscrollBehavior: 'contain' }}>
@@ -319,15 +385,34 @@ export function ChatInterface({ className }: ChatInterfaceProps) {
               className="flex-1"
             />
             
-            <Button
-              size="icon"
-              variant="outline"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={isLoading}
-              title="Upload files"
-            >
-              <Upload className="w-4 h-4" />
-            </Button>
+            {selectedRepository && onLoadRepositoryCodebase ? (
+              <Button
+                size="icon"
+                variant="outline"
+                onClick={() => {
+                  console.log('Load codebase button clicked for:', selectedRepository.name);
+                  onLoadRepositoryCodebase();
+                }}
+                disabled={isLoading || isLoadingCodebase}
+                title={`Load ${selectedRepository.name} to codebase`}
+              >
+                {isLoadingCodebase ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Database className="w-4 h-4" />
+                )}
+              </Button>
+            ) : (
+              <Button
+                size="icon"
+                variant="outline"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isLoading}
+                title="Upload files"
+              >
+                <Upload className="w-4 h-4" />
+              </Button>
+            )}
             
             <Button
               onClick={handleSendMessage}

@@ -2,7 +2,7 @@ export interface ChatMessage {
   id: string;
   role: 'user' | 'assistant' | 'system';
   content: string;
-  timestamp: Date;
+  timestamp: Date | string;
   codeReferences?: CodeReference[];
   isTyping?: boolean;
 }
@@ -20,13 +20,18 @@ export interface ChatSession {
   name: string;
   messages: ChatMessage[];
   codebaseContext?: CodebaseContext;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: Date | string;
+  updatedAt: Date | string;
 }
 
 export interface CodebaseContext {
   files: CodeFile[];
   structure: ProjectStructure;
+  repository?: {
+    name: string;
+    full_name: string;
+    default_branch: string;
+  };
   analysis?: CodeAnalysis;
 }
 
@@ -35,7 +40,7 @@ export interface CodeFile {
   content: string;
   language: string;
   size: number;
-  lastModified: Date;
+  lastModified: Date | string;
 }
 
 export interface ProjectStructure {

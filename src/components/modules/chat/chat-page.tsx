@@ -12,6 +12,7 @@ import { FileNavigationToolbar } from './file-navigation-toolbar';
 import { StorageWarning } from './storage-warning';
 import { ResizablePanels } from '@/components/ui/resizable-panels';
 import { useAIChat } from '@/hooks/useAIChat';
+import { useRepositoryCodebase } from '@/hooks/useRepositoryCodebase';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useFileNavigation } from '@/hooks/useFileNavigation';
 import { useFileNavigationShortcuts } from '@/hooks/useKeyboardShortcuts';
@@ -20,9 +21,11 @@ import { Button } from '@/components/ui/button';
 import { MessageSquare, Code, ChevronLeft, ChevronRight, BarChart3 } from 'lucide-react';
 import { GitHubFileContent } from '@/types/github';
 import { CurrentFileContext, CodebaseContext } from '@/types/chat';
+import { toast } from 'sonner';
 
 export function ChatPage() {
   const { activeSession, createNewSession, sendMessage, setCurrentFile, sessions, isLoading, updateSessionCodebase } = useAIChat();
+  const { fetchCodebase, isLoading: isLoadingCodebase } = useRepositoryCodebase();
   const isMobile = useIsMobile();
   const [showCodeView, setShowCodeView] = useState(false);
   const [showChatView, setShowChatView] = useState(true);
@@ -161,7 +164,25 @@ export function ChatPage() {
     sendMessage(message);
   };
 
+  // Track the last loaded codebase to prevent duplicate processing
+  const lastLoadedCodebaseRef = useRef<string | null>(null);
+
+  // Reset codebase tracking when repository changes
+  useEffect(() => {
+    lastLoadedCodebaseRef.current = null;
+  }, [selectedRepository]);
+
   const handleCodebaseLoaded = async (codebaseContext: CodebaseContext) => {
+    // Create a unique identifier for this codebase
+    const codebaseId = `${selectedRepository?.full_name}-${codebaseContext.files.length}`;
+    
+    // Prevent duplicate processing of the same codebase
+    if (lastLoadedCodebaseRef.current === codebaseId) {
+      return;
+    }
+    
+    lastLoadedCodebaseRef.current = codebaseId;
+    
     try {
       if (activeSession) {
         // Update existing session with codebase context
@@ -171,9 +192,67 @@ export function ChatPage() {
         const sessionName = `${selectedRepository?.name} - Code Analysis`;
         await createNewSession(sessionName, codebaseContext);
       }
+      
+      // Show success notification with auto-dismiss
+      toast.success(`Codebase loaded successfully! ${codebaseContext.files.length} files are now available for AI analysis.`, {
+        duration: 3000, // Auto-dismiss after 3 seconds
+      });
+      
+      // Force a re-render by switching to chat view to show the updated state
+      if (!showChatView) {
+        handleViewSwitch('chat');
+      }
     } catch (error) {
       console.error('Failed to update session with codebase:', error);
-      // The error will be handled by the useAIChat hook's error state
+      toast.error('Failed to load codebase into chat. Please try again.');
+      // Reset the ref on error so user can retry
+      lastLoadedCodebaseRef.current = null;
+    }
+  };
+
+  // Handle loading repository codebase from chat interface
+  const handleLoadRepositoryCodebase = async () => {
+    console.log('handleLoadRepositoryCodebase called');
+    
+    if (!selectedRepository) {
+      console.error('No repository selected');
+      toast.error('No repository selected. Please select a repository first.');
+      return;
+    }
+
+    console.log('Selected repository:', selectedRepository);
+    console.log('Is loading codebase:', isLoadingCodebase);
+
+    try {
+      console.log('Starting codebase fetch for:', selectedRepository.full_name);
+      
+      // Show immediate feedback
+      toast.info('Loading repository codebase...', { duration: 2000 });
+      
+      const codebaseContext = await fetchCodebase(selectedRepository);
+      console.log('Codebase fetched successfully:', codebaseContext);
+      
+      // Show progress feedback
+      toast.info('Preparing AI analysis...', { duration: 1000 });
+      
+      console.log('Calling handleCodebaseLoaded...');
+      await handleCodebaseLoaded(codebaseContext);
+      console.log('Codebase loaded to chat successfully');
+    } catch (error) {
+      console.error('Failed to load repository codebase:', error);
+      
+      // Show more specific error messages
+      if (error instanceof Error) {
+        if (error.message.includes('authentication')) {
+          toast.error('GitHub authentication required. Please connect your GitHub account first.');
+        } else if (error.message.includes('rate limit')) {
+          toast.error('GitHub API rate limit exceeded. Please try again later.');
+        } else {
+          toast.error(`Failed to load codebase: ${error.message}`);
+        }
+      } else {
+        toast.error('Failed to load repository codebase. Please try again.');
+      }
     }
   };
 
@@ -277,19 +356,14 @@ export function ChatPage() {
             {/* Main Content Area */}
             <div className="flex-1 min-h-0 flex flex-col">
               {showChatView ? (
-                <div className="flex-1 min-h-0 flex gap-4">
-                  <div className="flex-1 min-h-0">
-                    <ChatInterface className="h-full" />
-                  </div>
-                  {/* Code Insights Panel - Show as sidebar when codebase is loaded */}
-                  {activeSession?.codebaseContext && (
-                    <div className="w-80 flex-shrink-0 border-l">
-                      <CodeInsightsPanel 
-                        codebaseContext={activeSession.codebaseContext}
-                        onInsightClick={handleInsightClick}
-                      />
-                    </div>
-                  )}
+                <div className="flex-1 min-h-0">
+                  <ChatInterface 
+                    key={`mobile-${activeSession?.id}`} 
+                    className="h-full"
+                    selectedRepository={selectedRepository}
+                    onLoadRepositoryCodebase={handleLoadRepositoryCodebase}
+                    isLoadingCodebase={isLoadingCodebase}
+                  />
                 </div>
               ) : showCodeView && selectedFile ? (
                 <div className="flex-1 min-h-0 w-full">
@@ -299,6 +373,14 @@ export function ChatPage() {
                     error={fileError}
                     onRetry={retryFileLoad}
                     isFullScreen={true}
+                  />
+                </div>
+              ) : showInsightsView && activeSession?.codebaseContext ? (
+                <div className="flex-1 min-h-0 w-full">
+                  <CodeInsightsPanel 
+                    codebaseContext={activeSession.codebaseContext}
+                    onInsightClick={handleInsightClick}
+                    className="h-full"
                   />
                 </div>
               ) : (
@@ -448,19 +530,14 @@ export function ChatPage() {
             {/* Main Content Area */}
             <div className="flex-1 min-h-0 flex flex-col">
               {showChatView ? (
-                <div className="flex-1 min-h-0 flex gap-4">
-                  <div className="flex-1 min-h-0">
-                    <ChatInterface className="h-full" />
-                  </div>
-                  {/* Code Insights Panel - Show as sidebar when codebase is loaded */}
-                  {activeSession?.codebaseContext && (
-                    <div className="w-80 flex-shrink-0 border-l">
-                      <CodeInsightsPanel 
-                        codebaseContext={activeSession.codebaseContext}
-                        onInsightClick={handleInsightClick}
-                      />
-                    </div>
-                  )}
+                <div className="flex-1 min-h-0">
+                  <ChatInterface 
+                    key={`desktop-${activeSession?.id}`} 
+                    className="h-full"
+                    selectedRepository={selectedRepository}
+                    onLoadRepositoryCodebase={handleLoadRepositoryCodebase}
+                    isLoadingCodebase={isLoadingCodebase}
+                  />
                 </div>
               ) : showCodeView && selectedFile ? (
                 <div className="flex-1 min-h-0 w-full">
@@ -470,6 +547,14 @@ export function ChatPage() {
                     error={fileError}
                     onRetry={retryFileLoad}
                     isFullScreen={true}
+                  />
+                </div>
+              ) : showInsightsView && activeSession?.codebaseContext ? (
+                <div className="flex-1 min-h-0 w-full">
+                  <CodeInsightsPanel 
+                    codebaseContext={activeSession.codebaseContext}
+                    onInsightClick={handleInsightClick}
+                    className="h-full"
                   />
                 </div>
               ) : (

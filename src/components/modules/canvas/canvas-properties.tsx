@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useTheme } from 'next-themes';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -14,6 +15,7 @@ import { useCanvas } from '@/contexts/CanvasContext';
 import { CanvasElement } from '@/types';
 
 export const CanvasProperties: React.FC = () => {
+  const { theme } = useTheme();
   const { 
     project, 
     selectedElements, 
@@ -24,12 +26,12 @@ export const CanvasProperties: React.FC = () => {
 
   if (!project || selectedElements.length === 0) {
     return (
-      <Card className="w-64 bg-gray-800 border-gray-700">
+      <Card className={`w-64 ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
         <CardHeader>
-          <CardTitle className="text-sm text-gray-300">Properties</CardTitle>
+          <CardTitle className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>Properties</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-gray-500">Select an element to edit properties</p>
+          <p className={`text-sm ${theme === 'dark' ? 'text-gray-500' : 'text-gray-600'}`}>Select an element to edit properties</p>
         </CardContent>
       </Card>
     );
@@ -119,10 +121,10 @@ export const CanvasProperties: React.FC = () => {
   };
 
   return (
-    <Card className="w-64 bg-gray-800 border-gray-700">
+    <Card className={`w-64 ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-sm text-gray-300">
+          <CardTitle className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
             {isBulkEdit ? (
               <div className="flex items-center gap-2">
                 <span>Bulk Edit</span>

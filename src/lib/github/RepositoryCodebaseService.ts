@@ -85,6 +85,11 @@ export class RepositoryCodebaseService {
       return {
         files,
         structure,
+        repository: {
+          name: repository.name,
+          full_name: repository.full_name,
+          default_branch: repository.default_branch,
+        },
       };
     } catch (error) {
       console.error('Failed to fetch repository codebase:', error);

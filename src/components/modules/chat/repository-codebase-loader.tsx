@@ -9,12 +9,12 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { 
-  Download, 
-  AlertCircle, 
-  CheckCircle, 
-  FileText, 
-  Folder, 
+import {
+  Download,
+  AlertCircle,
+  CheckCircle,
+  FileText,
+  Folder,
   Loader2,
   RefreshCw,
   Info,
@@ -40,6 +40,7 @@ export function RepositoryCodebaseLoader({
     progress,
     fetchCodebase,
     estimateSize,
+    clearCodebase,
     clearError,
   } = useRepositoryCodebase();
 
@@ -57,12 +58,38 @@ export function RepositoryCodebaseLoader({
     }
   }, [repository, isAuthenticated]);
 
+  // Clear codebase when repository changes
+  useEffect(() => {
+    if (repository) {
+      clearError();
+      // Don't clear codebase context here as it might be intentionally loaded
+      // Only clear if it's a different repository
+      if (codebaseContext && codebaseContext.repository?.full_name !== repository.full_name) {
+        clearCodebase();
+      }
+    }
+  }, [repository, clearError, clearCodebase, codebaseContext]);
+
+  // Track if we've already notified about this codebase to prevent loops
+  const [hasNotified, setHasNotified] = useState(false);
+
   // Notify parent when codebase is loaded
   useEffect(() => {
-    if (codebaseContext) {
-      onCodebaseLoaded(codebaseContext);
+    if (codebaseContext && !hasNotified) {
+      setHasNotified(true);
+      // Add a small delay to ensure the UI has time to update
+      const timer = setTimeout(() => {
+        onCodebaseLoaded(codebaseContext);
+      }, 100);
+
+      return () => clearTimeout(timer);
     }
-  }, [codebaseContext, onCodebaseLoaded]);
+  }, [codebaseContext, onCodebaseLoaded, hasNotified]);
+
+  // Reset notification flag when repository changes
+  useEffect(() => {
+    setHasNotified(false);
+  }, [repository]);
 
   const handleEstimateSize = async () => {
     if (!repository) return;
@@ -82,10 +109,18 @@ export function RepositoryCodebaseLoader({
   };
 
   const handleLoadCodebase = async () => {
-    if (!repository) return;
+    if (!repository) {
+      console.log('No repository selected');
+      return;
+    }
+
+    console.log('Starting codebase load for:', repository.full_name);
+    console.log('Is authenticated:', isAuthenticated);
+    console.log('Current loading state:', isLoading);
 
     try {
-      await fetchCodebase(repository);
+      const result = await fetchCodebase(repository);
+      console.log('Codebase loaded successfully:', result);
     } catch (err) {
       console.error('Failed to load codebase:', err);
     }
@@ -114,8 +149,8 @@ export function RepositoryCodebaseLoader({
     );
   }
 
-  // Show success state when codebase is loaded
-  if (codebaseContext && !isLoading) {
+  // Show success state when codebase is loaded (and not currently loading)
+  if (codebaseContext && !isLoading && !progress) {
     return (
       <div className={className}>
         <Card>
@@ -270,8 +305,8 @@ export function RepositoryCodebaseLoader({
             </div>
           ) : null}
 
-          <Button 
-            onClick={handleLoadCodebase} 
+          <Button
+            onClick={handleLoadCodebase}
             className="w-full"
             disabled={isLoading || isEstimating}
           >
