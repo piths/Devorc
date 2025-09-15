@@ -1,5 +1,6 @@
 // Main storage exports
 export { LocalStorageManager } from './LocalStorageManager';
+export { ChatStorageManager } from './ChatStorageManager';
 export { StorageProvider, useStorage, StorageErrorBoundary } from './StorageProvider';
 
 // Utility exports

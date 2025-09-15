@@ -4,4 +4,6 @@ export { RepositoryDetail } from './repository-detail';
 export { CommitList } from './commit-list';
 export { IssueList } from './issue-list';
 export { PullRequestList } from './pull-request-list';
+export { BranchList } from './branch-list';
+export { PullRequestManager } from './pull-request-manager';
 export { GitHubErrorBoundary } from './github-error-boundary';

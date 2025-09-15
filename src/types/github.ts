@@ -57,6 +57,30 @@ export interface GitHubCommit {
   html_url: string;
 }
 
+export interface GitHubCommitFile {
+  filename: string;
+  additions: number;
+  deletions: number;
+  changes: number;
+  status: 'added' | 'removed' | 'modified' | 'renamed';
+  sha: string;
+  patch?: string; // Unified diff patch
+  raw_url: string;
+  blob_url: string;
+  contents_url: string;
+  previous_filename?: string;
+}
+
+export interface GitHubCommitDetail extends GitHubCommit {
+  files: GitHubCommitFile[];
+  stats?: {
+    total: number;
+    additions: number;
+    deletions: number;
+  };
+  parents: { sha: string; html_url: string; url: string }[];
+}
+
 export interface GitHubPullRequest {
   id: number;
   number: number;
@@ -75,6 +99,20 @@ export interface GitHubPullRequest {
   created_at: string;
   updated_at: string;
   html_url: string;
+  mergeable?: boolean;
+  merged?: boolean;
+  merged_at?: string;
+  assignees?: GitHubUser[];
+  requested_reviewers?: GitHubUser[];
+}
+
+export interface GitHubBranch {
+  name: string;
+  commit: {
+    sha: string;
+    url: string;
+  };
+  protected: boolean;
 }
 
 export interface CreateIssueRequest {
@@ -90,6 +128,35 @@ export interface UpdateIssueRequest {
   state?: 'open' | 'closed';
   assignee?: string;
   labels?: string[];
+}
+
+export interface CreateBranchRequest {
+  ref: string; // The name of the fully qualified reference (ie: refs/heads/master)
+  sha: string; // The SHA1 value to set this reference to
+}
+
+export interface CreatePullRequestRequest {
+  title: string;
+  head: string; // The name of the branch where your changes are implemented
+  base: string; // The name of the branch you want the changes pulled into
+  body?: string;
+  maintainer_can_modify?: boolean;
+  draft?: boolean;
+}
+
+export interface UpdatePullRequestRequest {
+  title?: string;
+  body?: string;
+  state?: 'open' | 'closed';
+  base?: string;
+  maintainer_can_modify?: boolean;
+}
+
+export interface MergePullRequestRequest {
+  commit_title?: string;
+  commit_message?: string;
+  sha?: string; // SHA that pull request head must match to allow merge
+  merge_method?: 'merge' | 'squash' | 'rebase';
 }
 
 export interface GitHubConnection {

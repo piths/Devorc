@@ -12,18 +12,25 @@ import {
   AlertCircle, 
   RefreshCw,
   Calendar,
-  User
+  User,
+  MessageSquare
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import { useSlackNotifications } from '@/hooks/useSlackNotifications';
+import { useToast } from '@/hooks/use-toast';
 
 interface CommitListProps {
   commits: GitHubCommit[];
   loading: boolean;
   error: string | null;
   onRetry: () => void;
+  repositoryName?: string;
+  repositoryUrl?: string;
+  branch?: string;
+  onSelectCommit?: (commit: GitHubCommit) => void;
 }
 
-export function CommitList({ commits, loading, error, onRetry }: CommitListProps) {
+export function CommitList({ commits, loading, error, onRetry, repositoryName, repositoryUrl, branch, onSelectCommit }: CommitListProps) {
   if (error) {
     return (
       <Card>
@@ -77,7 +84,7 @@ export function CommitList({ commits, loading, error, onRetry }: CommitListProps
             <GitCommit className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
             <h3 className="text-lg font-medium mb-2">No commits found</h3>
             <p className="text-muted-foreground">
-              This repository doesn't have any recent commits.
+              This repository doesn&apos;t have any recent commits.
             </p>
           </div>
         </CardContent>
@@ -96,7 +103,14 @@ export function CommitList({ commits, loading, error, onRetry }: CommitListProps
       <CardContent>
         <div className="space-y-3">
           {commits.map((commit) => (
-            <CommitItem key={commit.sha} commit={commit} />
+            <CommitItem 
+              key={commit.sha} 
+              commit={commit}
+              repositoryName={repositoryName}
+              repositoryUrl={repositoryUrl}
+              branch={branch}
+              onSelect={onSelectCommit}
+            />
           ))}
         </div>
       </CardContent>
@@ -106,9 +120,16 @@ export function CommitList({ commits, loading, error, onRetry }: CommitListProps
 
 interface CommitItemProps {
   commit: GitHubCommit;
+  repositoryName?: string;
+  repositoryUrl?: string;
+  branch?: string;
+  onSelect?: (commit: GitHubCommit) => void;
 }
 
-function CommitItem({ commit }: CommitItemProps) {
+function CommitItem({ commit, repositoryName, repositoryUrl, branch, onSelect }: CommitItemProps) {
+  const { toast } = useToast();
+  const { sendCommitNotification, isLoading } = useSlackNotifications();
+  
   const commitDate = new Date(commit.commit.author.date);
   const timeAgo = formatDistanceToNow(commitDate, { addSuffix: true });
   
@@ -116,12 +137,46 @@ function CommitItem({ commit }: CommitItemProps) {
   const commitMessage = commit.commit.message.split('\n')[0];
   const shortSha = commit.sha.substring(0, 7);
 
-  const handleExternalClick = () => {
+  const handleExternalClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
     window.open(commit.html_url, '_blank', 'noopener,noreferrer');
   };
 
+  const handleSlackNotify = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    if (!repositoryName || !repositoryUrl) {
+      toast({
+        title: "Cannot send notification",
+        description: "Repository information is missing",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const success = await sendCommitNotification(commit, {
+      repositoryName,
+      repositoryUrl,
+      branch: branch || 'main',
+      includeFiles: true
+    });
+
+    if (success) {
+      toast({
+        title: "Notification sent",
+        description: "Commit notification sent to Slack",
+      });
+    } else {
+      toast({
+        title: "Failed to send notification",
+        description: "Could not send Slack notification",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
-    <div className="flex items-start gap-3 p-3 border rounded-lg hover:bg-muted/50 transition-colors">
+    <div className="flex items-start gap-3 p-3 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer" onClick={() => onSelect?.(commit)}>
       <Avatar className="h-8 w-8">
         {commit.author ? (
           <AvatarImage src={commit.author.avatar_url} alt={commit.author.login} />
@@ -151,14 +206,28 @@ function CommitItem({ commit }: CommitItemProps) {
             </div>
           </div>
           
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleExternalClick}
-            className="flex-shrink-0"
-          >
-            <ExternalLink className="h-3 w-3" />
-          </Button>
+          <div className="flex items-center gap-1">
+            {repositoryName && repositoryUrl && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleSlackNotify}
+                disabled={isLoading}
+                className="flex-shrink-0"
+                title="Send to Slack"
+              >
+                <MessageSquare className="h-3 w-3" />
+              </Button>
+            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleExternalClick}
+              className="flex-shrink-0"
+            >
+              <ExternalLink className="h-3 w-3" />
+            </Button>
+          </div>
         </div>
       </div>
     </div>

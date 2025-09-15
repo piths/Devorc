@@ -28,7 +28,7 @@ describe('Home Page', () => {
   beforeEach(() => {
     mockUseRouter.mockReturnValue({
       push: mockPush,
-    } as any);
+    } as Partial<ReturnType<typeof useRouter>>);
     mockPush.mockClear();
   });
 
@@ -37,7 +37,7 @@ describe('Home Page', () => {
       isAuthenticated: false,
       isLoading: true,
       login: jest.fn(),
-    } as any);
+    } as Partial<ReturnType<typeof useGitHubAuth>>);
 
     render(<Home />);
     
@@ -50,7 +50,7 @@ describe('Home Page', () => {
       isAuthenticated: true,
       isLoading: false,
       login: jest.fn(),
-    } as any);
+    } as Partial<ReturnType<typeof useGitHubAuth>>);
 
     render(<Home />);
     
@@ -63,7 +63,7 @@ describe('Home Page', () => {
       isAuthenticated: false,
       isLoading: false,
       login: mockLogin,
-    } as any);
+    } as Partial<ReturnType<typeof useGitHubAuth>>);
 
     render(<Home />);
     
@@ -82,7 +82,7 @@ describe('Home Page', () => {
       isAuthenticated: false,
       isLoading: false,
       login: mockLogin,
-    } as any);
+    } as Partial<ReturnType<typeof useGitHubAuth>>);
 
     render(<Home />);
     
@@ -97,7 +97,7 @@ describe('Home Page', () => {
       isAuthenticated: true,
       isLoading: false,
       login: jest.fn(),
-    } as any);
+    } as Partial<ReturnType<typeof useGitHubAuth>>);
 
     const { container } = render(<Home />);
     

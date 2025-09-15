@@ -113,6 +113,7 @@ export interface Card {
   assignee?: string;
   dueDate?: Date;
   githubIssueId?: string;
+  githubRepo?: { owner: string; repo: string };
 }
 
 export interface SyncConfiguration {
@@ -120,6 +121,7 @@ export interface SyncConfiguration {
   columnMappings: Record<string, string>; // column id -> github label
   autoSync: boolean;
   syncInterval: number; // minutes
+  allRepos?: boolean; // when true, sync across all accessible repositories
 }
 
 // Canvas Models
@@ -167,6 +169,7 @@ export interface ElementStyle {
   fontSize?: number;
   fontFamily?: string;
   opacity?: number;
+  textAlign?: 'left' | 'center' | 'right';
 }
 
 export interface Connection {

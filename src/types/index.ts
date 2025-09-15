@@ -1,5 +1,7 @@
-// Re-export storage types
-export * from './storage';
+// Selective re-exports to avoid name collisions between storage and chat types
+export type { CanvasElement } from './storage';
+export type { ChatSession as ChatSessionStorage, ChatMessage as ChatMessageStorage, CodeReference as CodeReferenceStorage, CodebaseContext as CodebaseContextStorage } from './storage';
+export type { ChatSession as ChatSessionChat, ChatMessage as ChatMessageChat, CodeReference as CodeReferenceChat, CodebaseContext as CodebaseContextChat } from './chat';
 
 // Core application types (keeping for backward compatibility)
 export type ModuleType = 'dashboard' | 'kanban' | 'canvas' | 'chat';

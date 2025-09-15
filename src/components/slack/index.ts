@@ -1,0 +1,1 @@
+export { SlackNotificationPanel } from './slack-notification-panel';
