@@ -1,0 +1,21 @@
+{
+  "enabled": true,
+  "name": "Code Quality Automation",
+  "description": "Automatically runs ESLint, TypeScript checks, and formatting when files are saved to maintain code quality standards",
+  "version": "1",
+  "when": {
+    "type": "fileSaved",
+    "patterns": [
+      "src/**/*.ts",
+      "src/**/*.tsx",
+      "*.ts",
+      "*.tsx",
+      "*.js",
+      "*.jsx"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Source files have been modified. Please run code quality checks and improvements:\n\n1. Run ESLint to check for code quality issues and auto-fix where possible\n2. Verify TypeScript compilation with strict type checking\n3. Apply consistent code formatting using our project standards\n4. Check for unused imports and variables\n5. Ensure proper error handling patterns are followed\n6. Validate that new code follows our established architectural patterns\n7. Check for accessibility compliance in React components\n8. Verify that all new functions and components have proper TypeScript types\n\nReport any issues found and provide suggestions for improvements while maintaining our high code quality standards."
+  }
+}

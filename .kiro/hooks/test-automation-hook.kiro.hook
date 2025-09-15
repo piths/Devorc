@@ -1,0 +1,19 @@
+{
+  "enabled": true,
+  "name": "Test Automation",
+  "description": "Automatically generates and runs tests when React components or TypeScript files are saved, ensuring comprehensive test coverage for the Devorc Suite project",
+  "version": "1",
+  "when": {
+    "type": "fileSaved",
+    "patterns": [
+      "src/components/**/*.tsx",
+      "src/hooks/**/*.ts",
+      "src/lib/**/*.ts",
+      "src/app/**/*.tsx"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "A React component or TypeScript file has been saved. Please analyze the saved file and:\n\n1. Generate comprehensive test coverage if tests don't exist or are incomplete\n2. Update existing tests to match any new functionality or props\n3. Ensure tests cover all component states, error conditions, and user interactions\n4. Follow React Testing Library best practices with proper accessibility queries\n5. Include integration tests for complex components like chat interface and storage managers\n6. Run the test suite to verify all tests pass\n7. Generate test coverage reports to ensure we maintain high coverage\n\nFocus on testing the core functionality of our GitHub integration, chat system, storage management, and canvas components. Ensure tests are maintainable and follow our established patterns."
+  }
+}
