@@ -103,8 +103,94 @@ export function PullRequestManager({
       return;
     }
 
+    // Additional validation
+    if (title.trim().length < 1) {
+      toast({
+        title: "Invalid title",
+        description: "Title must be at least 1 character long",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (title.trim().length > 255) {
+      toast({
+        title: "Title too long",
+        description: "Title must be less than 255 characters",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate branch names
+    if (!headBranch || headBranch.trim().length === 0) {
+      toast({
+        title: "Invalid head branch",
+        description: "Please select a valid head branch",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!baseBranch || baseBranch.trim().length === 0) {
+      toast({
+        title: "Invalid base branch",
+        description: "Please select a valid base branch",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Check if branches exist in the available branches list
+    const headBranchExists = branches.some(branch => branch.name === headBranch);
+    const baseBranchExists = branches.some(branch => branch.name === baseBranch);
+
+    if (!headBranchExists) {
+      toast({
+        title: "Head branch not found",
+        description: `Branch "${headBranch}" does not exist in this repository. Available branches: ${branches.map(b => b.name).join(', ')}`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!baseBranchExists) {
+      toast({
+        title: "Base branch not found",
+        description: `Branch "${baseBranch}" does not exist in this repository. Available branches: ${branches.map(b => b.name).join(', ')}`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Additional validation for branch names
+    if (headBranch.includes(' ')) {
+      toast({
+        title: "Invalid head branch name",
+        description: "Branch names cannot contain spaces",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (baseBranch.includes(' ')) {
+      toast({
+        title: "Invalid base branch name",
+        description: "Branch names cannot contain spaces",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       setIsCreating(true);
+      console.log('Creating pull request with data:', {
+        title: title.trim(),
+        head: headBranch,
+        base: baseBranch,
+        body: body.trim() || undefined
+      });
+      
       await onCreatePullRequest(title.trim(), headBranch, baseBranch, body.trim() || undefined);
       setTitle('');
       setBody('');
@@ -116,6 +202,7 @@ export function PullRequestManager({
         description: `Successfully created pull request "${title}"`,
       });
     } catch (err) {
+      console.error('Error creating pull request:', err);
       toast({
         title: "Failed to create pull request",
         description: err instanceof Error ? err.message : "Unknown error occurred",
@@ -128,12 +215,14 @@ export function PullRequestManager({
 
   const handleMergePullRequest = async (pullNumber: number, mergeMethod: 'merge' | 'squash' | 'rebase') => {
     try {
+      console.log('Attempting to merge pull request:', { pullNumber, mergeMethod });
       await onMergePullRequest(pullNumber, mergeMethod);
       toast({
         title: "Pull request merged",
         description: `Successfully merged pull request #${pullNumber}`,
       });
     } catch (err) {
+      console.error('Error merging pull request:', err);
       toast({
         title: "Failed to merge pull request",
         description: err instanceof Error ? err.message : "Unknown error occurred",
@@ -144,12 +233,14 @@ export function PullRequestManager({
 
   const handleClosePullRequest = async (pullNumber: number) => {
     try {
+      console.log('Attempting to close pull request:', { pullNumber });
       await onClosePullRequest(pullNumber);
       toast({
         title: "Pull request closed",
         description: `Successfully closed pull request #${pullNumber}`,
       });
     } catch (err) {
+      console.error('Error closing pull request:', err);
       toast({
         title: "Failed to close pull request",
         description: err instanceof Error ? err.message : "Unknown error occurred",

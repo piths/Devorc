@@ -1393,15 +1393,7 @@ export const ProjectCanvas = React.forwardRef<Konva.Stage, ProjectCanvasProps>((
     success: theme === 'dark' ? '#10b981' : '#059669',
   };
 
-  if (!project) {
-    return (
-      <div className={`flex items-center justify-center ${theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'} ${className}`}>
-        <p className={theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}>No project loaded</p>
-      </div>
-    );
-  }
-
-  // Handle drag and drop for images
+  // Handle drag and drop for images - moved before early return to follow Rules of Hooks
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = 'copy';
@@ -1482,6 +1474,14 @@ export const ProjectCanvas = React.forwardRef<Konva.Stage, ProjectCanvasProps>((
       reader.readAsDataURL(file);
     });
   }, [createElement, combinedRef]);
+
+  if (!project) {
+    return (
+      <div className={`flex items-center justify-center ${theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'} ${className}`}>
+        <p className={theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}>No project loaded</p>
+      </div>
+    );
+  }
 
   return (
     <div 

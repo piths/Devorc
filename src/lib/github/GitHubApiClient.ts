@@ -83,8 +83,19 @@ export class GitHubApiClient {
         let errorData;
         try {
           errorData = await response.json();
+          console.error('GitHub API Error:', {
+            status: response.status,
+            statusText: response.statusText,
+            url: response.url,
+            errorData
+          });
         } catch {
           errorData = { message: response.statusText };
+          console.error('GitHub API Error (no JSON):', {
+            status: response.status,
+            statusText: response.statusText,
+            url: response.url
+          });
         }
         throw GitHubApiError.fromResponse(response, errorData);
       }
@@ -386,6 +397,13 @@ export class GitHubApiClient {
     repo: string,
     pullRequest: CreatePullRequestRequest
   ): Promise<GitHubPullRequest> {
+    console.log('GitHub API createPullRequest called with:', {
+      owner,
+      repo,
+      pullRequest,
+      url: `/repos/${owner}/${repo}/pulls`
+    });
+    
     return this.makeRequest<GitHubPullRequest>(`/repos/${owner}/${repo}/pulls`, {
       method: 'POST',
       headers: {

@@ -178,29 +178,72 @@ export function RepositoryDetail({ repository, onBack, className }: RepositoryDe
 
   // Pull request management functions
   const handleCreatePullRequest = async (title: string, head: string, base: string, body?: string) => {
-    if (!apiClient) return;
+    if (!apiClient) {
+      console.error('No API client available for creating pull request');
+      return;
+    }
 
-    await apiClient.createPullRequest(owner, repo, {
-      title,
-      head,
-      base,
-      body,
-    });
-    await loadPullRequests(); // Refresh PR list
+    try {
+      console.log('Creating pull request:', { title, head, base, body, owner, repo });
+      console.log('Repository details:', {
+        full_name: repository.full_name,
+        owner,
+        repo,
+        default_branch: repository.default_branch,
+        permissions: repository.permissions
+      });
+      
+      await apiClient.createPullRequest(owner, repo, {
+        title,
+        head,
+        base,
+        body,
+      });
+      await loadPullRequests(); // Refresh PR list
+      console.log('Pull request created successfully');
+    } catch (error) {
+      console.error('Error creating pull request:', error);
+      console.error('Error details:', {
+        name: error instanceof Error ? error.name : 'Unknown',
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined
+      });
+      // You might want to show a toast notification here
+    }
   };
 
   const handleMergePullRequest = async (pullNumber: number, mergeMethod: 'merge' | 'squash' | 'rebase') => {
-    if (!apiClient) return;
+    if (!apiClient) {
+      console.error('No API client available for merging pull request');
+      return;
+    }
 
-    await apiClient.mergePullRequest(owner, repo, pullNumber, { merge_method: mergeMethod });
-    await loadPullRequests(); // Refresh PR list
+    try {
+      console.log('Merging pull request:', { pullNumber, mergeMethod, owner, repo });
+      await apiClient.mergePullRequest(owner, repo, pullNumber, { merge_method: mergeMethod });
+      await loadPullRequests(); // Refresh PR list
+      console.log('Pull request merged successfully');
+    } catch (error) {
+      console.error('Error merging pull request:', error);
+      // You might want to show a toast notification here
+    }
   };
 
   const handleClosePullRequest = async (pullNumber: number) => {
-    if (!apiClient) return;
+    if (!apiClient) {
+      console.error('No API client available for closing pull request');
+      return;
+    }
 
-    await apiClient.closePullRequest(owner, repo, pullNumber);
-    await loadPullRequests(); // Refresh PR list
+    try {
+      console.log('Closing pull request:', { pullNumber, owner, repo });
+      await apiClient.closePullRequest(owner, repo, pullNumber);
+      await loadPullRequests(); // Refresh PR list
+      console.log('Pull request closed successfully');
+    } catch (error) {
+      console.error('Error closing pull request:', error);
+      // You might want to show a toast notification here
+    }
   };
 
   const handleRefreshAll = () => {
