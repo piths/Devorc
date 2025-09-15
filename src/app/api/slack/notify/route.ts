@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { SlackNotificationClient } from '@/lib/slack';
-import { GitHubCommit } from '@/types/github';
 
 export async function POST(request: NextRequest) {
   try {

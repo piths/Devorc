@@ -4,7 +4,6 @@ import React from 'react';
 import { GitHubPullRequest } from '@/types/github';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { 
@@ -103,7 +102,7 @@ export function PullRequestList({ pullRequests, loading, error, onRetry, reposit
             <GitPullRequest className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
             <h3 className="text-lg font-medium mb-2">No open pull requests</h3>
             <p className="text-muted-foreground mb-4">
-              This repository doesn't have any open pull requests.
+              This repository doesn&apos;t have any open pull requests.
             </p>
             <Button asChild>
               <a 

@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import { useRouter } from 'next/navigation';
-import { AuthGuard, withAuthGuard, useAuthGuard, AuthGuardProps } from '../auth-guard';
+import { AuthGuard, withAuthGuard, useAuthGuard } from '../auth-guard';
 import { useGitHubAuth } from '@/contexts/GitHubAuthContext';
 
 // Mock Next.js router
@@ -31,7 +31,7 @@ describe('AuthGuard', () => {
             forward: jest.fn(),
             refresh: jest.fn(),
             prefetch: jest.fn(),
-        } as any);
+        } as Partial<ReturnType<typeof useRouter>>);
     });
 
     describe('Loading State', () => {

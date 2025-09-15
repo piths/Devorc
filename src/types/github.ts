@@ -57,6 +57,30 @@ export interface GitHubCommit {
   html_url: string;
 }
 
+export interface GitHubCommitFile {
+  filename: string;
+  additions: number;
+  deletions: number;
+  changes: number;
+  status: 'added' | 'removed' | 'modified' | 'renamed';
+  sha: string;
+  patch?: string; // Unified diff patch
+  raw_url: string;
+  blob_url: string;
+  contents_url: string;
+  previous_filename?: string;
+}
+
+export interface GitHubCommitDetail extends GitHubCommit {
+  files: GitHubCommitFile[];
+  stats?: {
+    total: number;
+    additions: number;
+    deletions: number;
+  };
+  parents: { sha: string; html_url: string; url: string }[];
+}
+
 export interface GitHubPullRequest {
   id: number;
   number: number;

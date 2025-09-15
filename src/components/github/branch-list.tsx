@@ -88,10 +88,10 @@ export function BranchList({
         title: "Branch created",
         description: `Successfully created branch "${newBranchName}"`,
       });
-    } catch (err) {
+    } catch {
       toast({
         title: "Failed to create branch",
-        description: err instanceof Error ? err.message : "Unknown error occurred",
+        description: "Unknown error occurred",
         variant: "destructive",
       });
     } finally {
@@ -106,10 +106,10 @@ export function BranchList({
         title: "Branch deleted",
         description: `Successfully deleted branch "${branchName}"`,
       });
-    } catch (err) {
+    } catch {
       toast({
         title: "Failed to delete branch",
-        description: err instanceof Error ? err.message : "Unknown error occurred",
+        description: "Unknown error occurred",
         variant: "destructive",
       });
     }
@@ -124,7 +124,7 @@ export function BranchList({
         title: "Copied to clipboard",
         description: `SHA ${sha.substring(0, 7)} copied to clipboard`,
       });
-    } catch (err) {
+    } catch {
       toast({
         title: "Failed to copy",
         description: "Could not copy SHA to clipboard",
@@ -259,7 +259,7 @@ export function BranchList({
             <GitBranch className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
             <h3 className="text-lg font-medium mb-2">No branches found</h3>
             <p className="text-muted-foreground">
-              This repository doesn't have any branches.
+              This repository doesn&apos;t have any branches.
             </p>
           </div>
         ) : (
@@ -356,7 +356,7 @@ function BranchItem({ branch, isDefault, onDelete, onCopySha, copiedSha, reposit
               <AlertDialogHeader>
                 <AlertDialogTitle>Delete Branch</AlertDialogTitle>
                 <AlertDialogDescription>
-                  Are you sure you want to delete the branch "{branch.name}"? This action cannot be undone.
+                  Are you sure you want to delete the branch &quot;{branch.name}&quot;? This action cannot be undone.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>

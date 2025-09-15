@@ -220,6 +220,12 @@ export class GitHubApiClient {
     return this.makeRequest<GitHubCommit[]>(endpoint);
   }
 
+  async getCommit(owner: string, repo: string, sha: string) {
+    return this.makeRequest<import('@/types/github').GitHubCommitDetail>(
+      `/repos/${owner}/${repo}/commits/${sha}`
+    );
+  }
+
   async getIssues(
     owner: string,
     repo: string,

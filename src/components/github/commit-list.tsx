@@ -27,9 +27,10 @@ interface CommitListProps {
   repositoryName?: string;
   repositoryUrl?: string;
   branch?: string;
+  onSelectCommit?: (commit: GitHubCommit) => void;
 }
 
-export function CommitList({ commits, loading, error, onRetry, repositoryName, repositoryUrl, branch }: CommitListProps) {
+export function CommitList({ commits, loading, error, onRetry, repositoryName, repositoryUrl, branch, onSelectCommit }: CommitListProps) {
   if (error) {
     return (
       <Card>
@@ -83,7 +84,7 @@ export function CommitList({ commits, loading, error, onRetry, repositoryName, r
             <GitCommit className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
             <h3 className="text-lg font-medium mb-2">No commits found</h3>
             <p className="text-muted-foreground">
-              This repository doesn't have any recent commits.
+              This repository doesn&apos;t have any recent commits.
             </p>
           </div>
         </CardContent>
@@ -108,6 +109,7 @@ export function CommitList({ commits, loading, error, onRetry, repositoryName, r
               repositoryName={repositoryName}
               repositoryUrl={repositoryUrl}
               branch={branch}
+              onSelect={onSelectCommit}
             />
           ))}
         </div>
@@ -121,9 +123,10 @@ interface CommitItemProps {
   repositoryName?: string;
   repositoryUrl?: string;
   branch?: string;
+  onSelect?: (commit: GitHubCommit) => void;
 }
 
-function CommitItem({ commit, repositoryName, repositoryUrl, branch }: CommitItemProps) {
+function CommitItem({ commit, repositoryName, repositoryUrl, branch, onSelect }: CommitItemProps) {
   const { toast } = useToast();
   const { sendCommitNotification, isLoading } = useSlackNotifications();
   
@@ -134,7 +137,8 @@ function CommitItem({ commit, repositoryName, repositoryUrl, branch }: CommitIte
   const commitMessage = commit.commit.message.split('\n')[0];
   const shortSha = commit.sha.substring(0, 7);
 
-  const handleExternalClick = () => {
+  const handleExternalClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
     window.open(commit.html_url, '_blank', 'noopener,noreferrer');
   };
 
@@ -172,7 +176,7 @@ function CommitItem({ commit, repositoryName, repositoryUrl, branch }: CommitIte
   };
 
   return (
-    <div className="flex items-start gap-3 p-3 border rounded-lg hover:bg-muted/50 transition-colors">
+    <div className="flex items-start gap-3 p-3 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer" onClick={() => onSelect?.(commit)}>
       <Avatar className="h-8 w-8">
         {commit.author ? (
           <AvatarImage src={commit.author.avatar_url} alt={commit.author.login} />

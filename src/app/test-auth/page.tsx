@@ -100,7 +100,7 @@ export default function TestAuthPage() {
                       ID: {envStatus.clientId}
                     </div>
                   )}
-                  {envStatus?.clientSecretLength > 0 && (
+                  {envStatus?.clientSecretLength && envStatus.clientSecretLength > 0 && (
                     <div className="text-xs text-muted-foreground">
                       Secret: {envStatus.clientSecretLength} characters
                     </div>
@@ -257,11 +257,11 @@ export default function TestAuthPage() {
           <CardContent className="space-y-4">
             <ol className="list-decimal list-inside space-y-2 text-sm">
               <li>Go to <a href="https://github.com/settings/developers" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">GitHub Developer Settings</a></li>
-              <li>Click "New OAuth App"</li>
-              <li>Set Application name: "Devorc Suite"</li>
-              <li>Set Homepage URL: "http://localhost:3001" <span className="text-yellow-600">(note: port 3001)</span></li>
-              <li>Set Authorization callback URL: "http://localhost:3001/auth/github/callback" <span className="text-yellow-600">(note: port 3001)</span></li>
-              <li>Click "Register application"</li>
+              <li>Click &quot;New OAuth App&quot;</li>
+              <li>Set Application name: &quot;Devorc Suite&quot;</li>
+              <li>Set Homepage URL: &quot;http://localhost:3001&quot; <span className="text-yellow-600">(note: port 3001)</span></li>
+              <li>Set Authorization callback URL: &quot;http://localhost:3001/auth/github/callback&quot; <span className="text-yellow-600">(note: port 3001)</span></li>
+              <li>Click &quot;Register application&quot;</li>
               <li>Copy the Client ID and generate a Client Secret</li>
               <li>Update your <code className="bg-muted px-1 rounded">.env.local</code> file with the new credentials</li>
               <li>Restart your development server</li>

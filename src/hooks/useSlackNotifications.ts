@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { GitHubCommit } from '@/types/github';
-import { SlackNotificationClient, CommitNotificationOptions } from '@/lib/slack';
+import { CommitNotificationOptions } from '@/lib/slack';
 
 interface UseSlackNotificationsReturn {
   sendCommitNotification: (commit: GitHubCommit, options: CommitNotificationOptions) => Promise<boolean>;
@@ -16,8 +16,6 @@ export function useSlackNotifications(): UseSlackNotificationsReturn {
   const [error, setError] = useState<string | null>(null);
   const [lastResult, setLastResult] = useState<{ success: boolean; message?: string } | null>(null);
 
-  const slackClient = new SlackNotificationClient();
-
   const sendCommitNotification = useCallback(async (
     commit: GitHubCommit,
     options: CommitNotificationOptions
@@ -26,14 +24,27 @@ export function useSlackNotifications(): UseSlackNotificationsReturn {
       setIsLoading(true);
       setError(null);
 
-      const result = await slackClient.sendCommitNotification(commit, options);
+      const response = await fetch('/api/slack/notify', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          commit,
+          options,
+          type: 'single'
+        }),
+      });
+
+      const result = await response.json();
       
-      if (result.success) {
+      if (response.ok && result.success) {
         setLastResult({ success: true, message: 'Commit notification sent successfully' });
         return true;
       } else {
-        setError(result.error || 'Failed to send notification');
-        setLastResult({ success: false, message: result.error });
+        const errorMessage = result.error || 'Failed to send notification';
+        setError(errorMessage);
+        setLastResult({ success: false, message: errorMessage });
         return false;
       }
     } catch (err) {
@@ -54,14 +65,27 @@ export function useSlackNotifications(): UseSlackNotificationsReturn {
       setIsLoading(true);
       setError(null);
 
-      const result = await slackClient.sendBatchCommitNotification(commits, options);
+      const response = await fetch('/api/slack/notify', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          commits,
+          options,
+          type: 'batch'
+        }),
+      });
+
+      const result = await response.json();
       
-      if (result.success) {
+      if (response.ok && result.success) {
         setLastResult({ success: true, message: `Batch notification sent for ${commits.length} commits` });
         return true;
       } else {
-        setError(result.error || 'Failed to send batch notification');
-        setLastResult({ success: false, message: result.error });
+        const errorMessage = result.error || 'Failed to send batch notification';
+        setError(errorMessage);
+        setLastResult({ success: false, message: errorMessage });
         return false;
       }
     } catch (err) {
@@ -79,14 +103,20 @@ export function useSlackNotifications(): UseSlackNotificationsReturn {
       setIsLoading(true);
       setError(null);
 
-      const result = await slackClient.testConnection();
+      // Use the API endpoint instead of direct client call
+      const response = await fetch('/api/slack/notify', {
+        method: 'GET',
+      });
+
+      const result = await response.json();
       
-      if (result.success) {
+      if (response.ok && result.success) {
         setLastResult({ success: true, message: 'Slack connection test successful' });
         return true;
       } else {
-        setError(result.error || 'Connection test failed');
-        setLastResult({ success: false, message: result.error });
+        const errorMessage = result.error || 'Connection test failed';
+        setError(errorMessage);
+        setLastResult({ success: false, message: errorMessage });
         return false;
       }
     } catch (err) {

@@ -63,7 +63,7 @@ function verifyGitHubSignature(payload: string, signature: string, secret: strin
   );
 }
 
-function transformGitHubCommitToSlackFormat(githubCommit: any, repository: any) {
+function transformGitHubCommitToSlackFormat(githubCommit: GitHubWebhookPayload['commits'][0]) {
   return {
     sha: githubCommit.id,
     commit: {
@@ -75,8 +75,12 @@ function transformGitHubCommitToSlackFormat(githubCommit: any, repository: any) 
       }
     },
     author: githubCommit.author.username ? {
+      id: 0, // Webhook doesn't provide user ID
       login: githubCommit.author.username,
-      avatar_url: `https://github.com/${githubCommit.author.username}.png`
+      name: githubCommit.author.name,
+      email: githubCommit.author.email,
+      avatar_url: `https://github.com/${githubCommit.author.username}.png`,
+      html_url: `https://github.com/${githubCommit.author.username}`
     } : null,
     html_url: githubCommit.url,
     files: [
@@ -111,7 +115,7 @@ export async function POST(request: NextRequest) {
     const payload: GitHubWebhookPayload = JSON.parse(body);
     
     // Skip if no commits or if it's a delete event
-    if (!payload.commits || payload.commits.length === 0 || payload.deleted) {
+    if (!payload.commits || payload.commits.length === 0) {
       return NextResponse.json({ message: 'No commits to process' }, { status: 200 });
     }
 
@@ -140,11 +144,11 @@ export async function POST(request: NextRequest) {
 
     if (payload.commits.length === 1) {
       // Single commit notification
-      const commit = transformGitHubCommitToSlackFormat(payload.commits[0], payload.repository);
+      const commit = transformGitHubCommitToSlackFormat(payload.commits[0]);
       result = await slackClient.sendCommitNotification(commit, options);
     } else {
       // Batch commit notification
-      const commits = payload.commits.map(c => transformGitHubCommitToSlackFormat(c, payload.repository));
+      const commits = payload.commits.map(c => transformGitHubCommitToSlackFormat(c));
       result = await slackClient.sendBatchCommitNotification(commits, options);
     }
 

@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { CommitList } from './commit-list';
+import { CommitDiffDialog } from './commit-diff-dialog';
 import { IssueList } from './issue-list';
 import { PullRequestList } from './pull-request-list';
 import { BranchList } from './branch-list';
@@ -57,6 +58,8 @@ export function RepositoryDetail({ repository, onBack, className }: RepositoryDe
   const [issuesError, setIssuesError] = useState<string | null>(null);
   const [pullRequestsError, setPullRequestsError] = useState<string | null>(null);
   const [branchesError, setBranchesError] = useState<string | null>(null);
+  const [selectedCommitSha, setSelectedCommitSha] = useState<string | null>(null);
+  const [diffOpen, setDiffOpen] = useState(false);
 
   const [owner, repo] = repository.full_name.split('/');
   const updatedAt = new Date(repository.updated_at);
@@ -86,6 +89,11 @@ export function RepositoryDetail({ repository, onBack, className }: RepositoryDe
     } finally {
       setCommitsLoading(false);
     }
+  };
+
+  const handleSelectCommit = (c: GitHubCommit) => {
+    setSelectedCommitSha(c.sha);
+    setDiffOpen(true);
   };
 
   const loadIssues = async () => {
@@ -345,6 +353,14 @@ export function RepositoryDetail({ repository, onBack, className }: RepositoryDe
             repositoryName={repository.name}
             repositoryUrl={repository.html_url}
             branch={repository.default_branch}
+            onSelectCommit={handleSelectCommit}
+          />
+          <CommitDiffDialog 
+            owner={owner}
+            repo={repo}
+            sha={selectedCommitSha}
+            open={diffOpen}
+            onOpenChange={setDiffOpen}
           />
         </TabsContent>
 

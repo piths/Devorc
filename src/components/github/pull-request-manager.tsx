@@ -4,7 +4,6 @@ import React, { useState } from 'react';
 import { GitHubPullRequest, GitHubBranch } from '@/types/github';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -19,8 +18,7 @@ import {
   X,
   Calendar,
   User,
-  GitBranch,
-  Users
+  GitBranch
 } from 'lucide-react';
 import {
   Dialog,

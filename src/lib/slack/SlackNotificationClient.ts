@@ -1,5 +1,9 @@
 import { GitHubCommit } from '@/types/github';
 
+// Commits passed through Slack notifications may optionally include a lightweight
+// files array (filename + status) when available (e.g., from webhooks).
+type SlackCommit = GitHubCommit & { files?: Array<{ filename: string; status: string }> };
+
 export interface SlackMessage {
   text?: string;
   blocks?: SlackBlock[];
@@ -43,16 +47,24 @@ export class SlackNotificationClient {
   private defaultChannel: string | null = null;
 
   constructor() {
+    // For server-side usage, these should be available
     this.webhookUrl = process.env.SLACK_WEBHOOK_URL || null;
     this.botToken = process.env.SLACK_BOT_TOKEN || null;
     this.defaultChannel = process.env.SLACK_CHANNEL_ID || null;
+    
+    // Debug logging
+    console.log('SlackNotificationClient initialized:', {
+      hasWebhook: !!this.webhookUrl,
+      hasBotToken: !!this.botToken,
+      hasChannel: !!this.defaultChannel
+    });
   }
 
   /**
    * Send a commit notification to Slack
    */
   async sendCommitNotification(
-    commit: GitHubCommit,
+    commit: SlackCommit,
     options: CommitNotificationOptions
   ): Promise<{ success: boolean; error?: string }> {
     try {
@@ -77,7 +89,7 @@ export class SlackNotificationClient {
    * Send multiple commit notifications (for batch commits)
    */
   async sendBatchCommitNotification(
-    commits: GitHubCommit[],
+    commits: SlackCommit[],
     options: CommitNotificationOptions
   ): Promise<{ success: boolean; error?: string }> {
     try {
@@ -101,7 +113,7 @@ export class SlackNotificationClient {
   /**
    * Format a single commit into a Slack message
    */
-  private formatCommitMessage(commit: GitHubCommit, options: CommitNotificationOptions): SlackMessage {
+  private formatCommitMessage(commit: SlackCommit, options: CommitNotificationOptions): SlackMessage {
     const commitDate = new Date(commit.commit.author.date);
     const shortSha = commit.sha.substring(0, 7);
     const authorName = commit.author?.login || commit.commit.author.name;
@@ -198,7 +210,7 @@ export class SlackNotificationClient {
   /**
    * Format multiple commits into a batch notification
    */
-  private formatBatchCommitMessage(commits: GitHubCommit[], options: CommitNotificationOptions): SlackMessage {
+  private formatBatchCommitMessage(commits: SlackCommit[], options: CommitNotificationOptions): SlackMessage {
     const mentions = options.mentionUsers?.map(user => `<@${user}>`).join(' ') || '';
     
     const blocks: SlackBlock[] = [
@@ -391,3 +403,5 @@ export class SlackNotificationClient {
     }
   }
 }
+
+//

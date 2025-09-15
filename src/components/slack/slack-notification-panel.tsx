@@ -56,6 +56,28 @@ export function SlackNotificationPanel({
   const [mentionUsers, setMentionUsers] = useState('');
   const [customMessage, setCustomMessage] = useState('');
   const [autoNotify, setAutoNotify] = useState(false);
+  const [configStatus, setConfigStatus] = useState<{
+    configured: boolean;
+    webhook: boolean;
+    botToken: boolean;
+    method: string;
+  } | null>(null);
+
+  // Load configuration status
+  React.useEffect(() => {
+    const loadConfig = async () => {
+      try {
+        const response = await fetch('/api/slack/config');
+        if (response.ok) {
+          const config = await response.json();
+          setConfigStatus(config);
+        }
+      } catch (error) {
+        console.error('Failed to load Slack config:', error);
+      }
+    };
+    loadConfig();
+  }, []);
 
   const handleSendNotification = async () => {
     const options = {
@@ -277,15 +299,27 @@ export function SlackNotificationPanel({
         <div className="space-y-2">
           <Label className="text-sm font-medium">Configuration Status</Label>
           <div className="flex flex-wrap gap-2">
-            <Badge variant={process.env.NEXT_PUBLIC_SLACK_WEBHOOK_URL ? 'default' : 'secondary'}>
-              Webhook: {process.env.NEXT_PUBLIC_SLACK_WEBHOOK_URL ? 'Configured' : 'Not Set'}
-            </Badge>
-            <Badge variant={process.env.NEXT_PUBLIC_SLACK_BOT_TOKEN ? 'default' : 'secondary'}>
-              Bot Token: {process.env.NEXT_PUBLIC_SLACK_BOT_TOKEN ? 'Configured' : 'Not Set'}
-            </Badge>
+            {configStatus ? (
+              <>
+                <Badge variant={configStatus.webhook ? 'default' : 'secondary'}>
+                  Webhook: {configStatus.webhook ? 'Configured' : 'Not Set'}
+                </Badge>
+                <Badge variant={configStatus.botToken ? 'default' : 'secondary'}>
+                  Bot Token: {configStatus.botToken ? 'Configured' : 'Not Set'}
+                </Badge>
+                <Badge variant={configStatus.configured ? 'default' : 'destructive'}>
+                  Status: {configStatus.configured ? `Ready (${configStatus.method})` : 'Not Configured'}
+                </Badge>
+              </>
+            ) : (
+              <Badge variant="secondary">Loading...</Badge>
+            )}
           </div>
           <p className="text-xs text-muted-foreground">
-            Configure Slack integration in your environment variables
+            {configStatus?.configured 
+              ? `Using ${configStatus.method} method for Slack integration`
+              : 'Configure Slack integration in your environment variables'
+            }
           </p>
         </div>
       </CardContent>
