@@ -92,18 +92,20 @@ export default function Home() {
             {/* Main Heading */}
             <div className="space-y-8 animate-fade-in-up delay-300">
               <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold tracking-tight leading-[0.9]">
-                <span className="block text-white mb-2">Ship Code</span>
+                <span className="block text-white mb-2">DevOrc Suite</span>
+                <span className="block text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl text-gray-300 mb-4 font-light">
+                  Ship Code
+                </span>
                 <span className="block bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 bg-clip-text text-transparent animate-gradient">
                   10x Faster
                 </span>
               </h1>
               
               <p className="text-lg sm:text-xl md:text-2xl text-gray-300 max-w-4xl mx-auto leading-relaxed font-light px-4">
-                The only developer platform that transforms your GitHub workflow into a 
-                <span className="text-purple-400 font-medium"> supercharged development experience</span>. 
-                Build, manage, and deploy with 
-                <span className="text-blue-400 font-medium"> AI-powered intelligence</span> and 
-                <span className="text-pink-400 font-medium"> seamless collaboration</span>.
+                The AI-powered developer productivity platform that unifies GitHub management, project planning, and intelligent code assistance. 
+                <span className="text-purple-400 font-medium"> Chat with your entire codebase</span>, 
+                <span className="text-blue-400 font-medium"> visualize project architecture</span>, and 
+                <span className="text-pink-400 font-medium"> manage tasks seamlessly</span>.
               </p>
               
               {/* Social proof */}
@@ -203,17 +205,17 @@ export default function Home() {
                 </div>
                 <h3 className="text-xl sm:text-2xl font-bold text-white mb-4">GitHub Dashboard</h3>
                 <p className="text-gray-300 text-base sm:text-lg leading-relaxed mb-6">
-                  Transform your GitHub workflow into a powerful command center. Get real-time insights, 
-                  automated code reviews, and AI-powered project analytics that help you ship faster.
+                  Comprehensive GitHub repository management with real-time data visualization. 
+                  Browse repositories, track issues, manage pull requests, and monitor project health all in one unified dashboard.
                 </p>
                 <div className="flex flex-wrap gap-2 sm:gap-3">
                   <div className="flex items-center gap-2 text-xs sm:text-sm text-purple-300 bg-purple-500/10 px-2 sm:px-3 py-1 rounded-full">
                     <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4" />
-                    Real-time Analytics
+                    Repository Analytics
                   </div>
                   <div className="flex items-center gap-2 text-xs sm:text-sm text-purple-300 bg-purple-500/10 px-2 sm:px-3 py-1 rounded-full">
-                    <Zap className="w-3 h-3 sm:w-4 sm:h-4" />
-                    Smart Automation
+                    <Github className="w-3 h-3 sm:w-4 sm:h-4" />
+                    Issue Tracking
                   </div>
                 </div>
               </div>
@@ -233,17 +235,17 @@ export default function Home() {
                 </div>
                 <h3 className="text-xl sm:text-2xl font-bold text-white mb-4">Smart Kanban</h3>
                 <p className="text-gray-300 text-base sm:text-lg leading-relaxed mb-6">
-                  Project management that thinks ahead. Auto-sync with GitHub issues, AI-powered task prioritization, 
-                  and intelligent sprint planning that adapts to your team&apos;s velocity.
+                  Visual task management with drag-and-drop functionality. Create, organize, and track project tasks 
+                  with GitHub integration for seamless issue synchronization and team collaboration.
                 </p>
                 <div className="flex flex-wrap gap-2 sm:gap-3">
                   <div className="flex items-center gap-2 text-xs sm:text-sm text-blue-300 bg-blue-500/10 px-2 sm:px-3 py-1 rounded-full">
-                    <Users className="w-3 h-3 sm:w-4 sm:h-4" />
-                    Team Sync
+                    <Kanban className="w-3 h-3 sm:w-4 sm:h-4" />
+                    Drag & Drop
                   </div>
                   <div className="flex items-center gap-2 text-xs sm:text-sm text-blue-300 bg-blue-500/10 px-2 sm:px-3 py-1 rounded-full">
-                    <Bot className="w-3 h-3 sm:w-4 sm:h-4" />
-                    AI Planning
+                    <Github className="w-3 h-3 sm:w-4 sm:h-4" />
+                    GitHub Sync
                   </div>
                 </div>
               </div>
@@ -263,17 +265,17 @@ export default function Home() {
                 </div>
                 <h3 className="text-xl sm:text-2xl font-bold text-white mb-4">Project Canvas</h3>
                 <p className="text-gray-300 text-base sm:text-lg leading-relaxed mb-6">
-                  Turn ideas into reality with an infinite visual workspace. Design system architecture, 
-                  brainstorm features, and create living documentation that evolves with your project.
+                  Interactive visual workspace for project planning and architecture design. 
+                  Create flowcharts, wireframes, and system diagrams with an intuitive canvas interface and collaborative tools.
                 </p>
                 <div className="flex flex-wrap gap-2 sm:gap-3">
                   <div className="flex items-center gap-2 text-xs sm:text-sm text-pink-300 bg-pink-500/10 px-2 sm:px-3 py-1 rounded-full">
                     <Palette className="w-3 h-3 sm:w-4 sm:h-4" />
-                    Visual Design
+                    Interactive Canvas
                   </div>
                   <div className="flex items-center gap-2 text-xs sm:text-sm text-pink-300 bg-pink-500/10 px-2 sm:px-3 py-1 rounded-full">
-                    <Users className="w-3 h-3 sm:w-4 sm:h-4" />
-                    Live Collab
+                    <Zap className="w-3 h-3 sm:w-4 sm:h-4" />
+                    Real-time Tools
                   </div>
                 </div>
               </div>
@@ -291,19 +293,19 @@ export default function Home() {
                     AI
                   </Badge>
                 </div>
-                <h3 className="text-xl sm:text-2xl font-bold text-white mb-4">AI Assistant</h3>
+                <h3 className="text-xl sm:text-2xl font-bold text-white mb-4">AI Chat Assistant</h3>
                 <p className="text-gray-300 text-base sm:text-lg leading-relaxed mb-6">
-                  Your 24/7 coding partner that never sleeps. Get instant code reviews, smart refactoring suggestions, 
-                  and proactive bug detection that learns from your codebase.
+                  Intelligent chat interface that understands your entire codebase. Load GitHub repositories, 
+                  navigate files with keyboard shortcuts, and get AI-powered code insights with persistent chat sessions.
                 </p>
                 <div className="flex flex-wrap gap-2 sm:gap-3">
                   <div className="flex items-center gap-2 text-xs sm:text-sm text-green-300 bg-green-500/10 px-2 sm:px-3 py-1 rounded-full">
-                    <Bot className="w-3 h-3 sm:w-4 sm:h-4" />
-                    Code Review
+                    <Github className="w-3 h-3 sm:w-4 sm:h-4" />
+                    Codebase Chat
                   </div>
                   <div className="flex items-center gap-2 text-xs sm:text-sm text-green-300 bg-green-500/10 px-2 sm:px-3 py-1 rounded-full">
-                    <Zap className="w-3 h-3 sm:w-4 sm:h-4" />
-                    Auto-Fix
+                    <Bot className="w-3 h-3 sm:w-4 sm:h-4" />
+                    Code Analysis
                   </div>
                 </div>
               </div>
@@ -326,8 +328,8 @@ export default function Home() {
                 Ready to Ship 10x Faster?
               </h2>
               <p className="text-lg sm:text-xl text-gray-300 max-w-2xl mx-auto leading-relaxed">
-                Join 10,000+ developers who&apos;ve already transformed their workflow. 
-                <span className="text-purple-400 font-medium"> Start building the future</span> in under 60 seconds.
+                Experience the next generation of developer productivity tools. 
+                <span className="text-purple-400 font-medium"> Unify your workflow</span> with AI-powered insights and seamless GitHub integration.
               </p>
             </div>
             
