@@ -2,10 +2,6 @@
 
 import {
   IconChevronRight,
-  IconDots,
-  IconFolder,
-  IconShare3,
-  IconTrash,
   type Icon,
 } from "@tabler/icons-react"
 
@@ -15,23 +11,14 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible"
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import {
   SidebarGroup,
   SidebarGroupLabel,
   SidebarMenu,
-  SidebarMenuAction,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarMenuSub,
   SidebarMenuSubButton,
   SidebarMenuSubItem,
-  useSidebar,
 } from "@/components/ui/sidebar"
 
 export function NavDocuments({
@@ -52,12 +39,11 @@ export function NavDocuments({
     isActive?: boolean
   }>
 }) {
-  const { isMobile } = useSidebar()
 
   return (
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
-      {title && <SidebarGroupLabel>{title}</SidebarGroupLabel>}
-      <SidebarMenu>
+      {title && <SidebarGroupLabel className="text-xs font-medium text-sidebar-foreground/70 px-2 py-1">{title}</SidebarGroupLabel>}
+      <SidebarMenu className="space-y-1">
         {items.map((item) => {
           const itemName = item.name || item.title || ''
           
@@ -71,20 +57,20 @@ export function NavDocuments({
               >
                 <SidebarMenuItem>
                   <CollapsibleTrigger asChild>
-                    <SidebarMenuButton tooltip={itemName}>
-                      <item.icon />
-                      <span>{itemName}</span>
-                      <IconChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                    <SidebarMenuButton tooltip={itemName} className="h-8 px-3">
+                      <item.icon className="h-4 w-4" />
+                      <span className="text-sm">{itemName}</span>
+                      <IconChevronRight className="ml-auto h-4 w-4 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
                     </SidebarMenuButton>
                   </CollapsibleTrigger>
                   <CollapsibleContent>
-                    <SidebarMenuSub>
+                    <SidebarMenuSub className="ml-2 space-y-1">
                       {item.items.map((subItem) => (
                         <SidebarMenuSubItem key={subItem.title}>
-                          <SidebarMenuSubButton asChild>
+                          <SidebarMenuSubButton asChild className="h-7 px-3">
                             <a href={subItem.url}>
-                              {subItem.icon && <subItem.icon />}
-                              <span>{subItem.title}</span>
+                              {subItem.icon && <subItem.icon className="h-3.5 w-3.5" />}
+                              <span className="text-xs">{subItem.title}</span>
                             </a>
                           </SidebarMenuSubButton>
                         </SidebarMenuSubItem>
@@ -98,42 +84,12 @@ export function NavDocuments({
 
           return (
             <SidebarMenuItem key={itemName}>
-              <SidebarMenuButton asChild tooltip={itemName}>
-                <a href={item.url}>
-                  <item.icon />
-                  <span>{itemName}</span>
+              <SidebarMenuButton asChild tooltip={itemName} className="h-8 px-3">
+                <a href={item.url} className="flex items-center gap-3">
+                  <item.icon className="h-4 w-4" />
+                  <span className="text-sm">{itemName}</span>
                 </a>
               </SidebarMenuButton>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <SidebarMenuAction
-                    showOnHover
-                    className="data-[state=open]:bg-accent rounded-sm"
-                  >
-                    <IconDots />
-                    <span className="sr-only">More</span>
-                  </SidebarMenuAction>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent
-                  className="w-24 rounded-lg"
-                  side={isMobile ? "bottom" : "right"}
-                  align={isMobile ? "end" : "start"}
-                >
-                  <DropdownMenuItem>
-                    <IconFolder />
-                    <span>Open</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <IconShare3 />
-                    <span>Share</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem variant="destructive">
-                    <IconTrash />
-                    <span>Delete</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
             </SidebarMenuItem>
           )
         })}

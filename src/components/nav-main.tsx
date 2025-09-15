@@ -1,8 +1,6 @@
 "use client"
 
-import { IconCirclePlusFilled, IconMail, type Icon } from "@tabler/icons-react"
-
-import { Button } from "@/components/ui/button"
+import { type Icon } from "@tabler/icons-react"
 import { Badge } from "@/components/ui/badge"
 import {
   SidebarGroup,
@@ -25,54 +23,36 @@ export function NavMain({
 }) {
   return (
     <SidebarGroup>
-      <SidebarGroupContent className="flex flex-col gap-2">
-        <SidebarMenu>
-          <SidebarMenuItem className="flex items-center gap-2">
-            <SidebarMenuButton
-              tooltip="Quick Create"
-              className="bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground active:bg-primary/90 active:text-primary-foreground min-w-8 duration-200 ease-linear"
-            >
-              <IconCirclePlusFilled />
-              <span>Quick Create</span>
-            </SidebarMenuButton>
-            <Button
-              size="icon"
-              className="size-8 group-data-[collapsible=icon]:opacity-0"
-              variant="outline"
-            >
-              <IconMail />
-              <span className="sr-only">Inbox</span>
-            </Button>
-          </SidebarMenuItem>
-        </SidebarMenu>
-        <SidebarMenu>
+      <SidebarGroupContent>
+        <SidebarMenu className="space-y-1">
           {items.map((item) => (
             <SidebarMenuItem key={item.title}>
               <SidebarMenuButton 
                 tooltip={item.title}
                 isActive={item.isActive}
                 asChild={!!item.url && item.url !== "#"}
+                className="h-9 px-3"
               >
                 {item.url && item.url !== "#" ? (
                   <a href={item.url} className="flex items-center justify-between w-full">
-                    <div className="flex items-center">
-                      {item.icon && <item.icon />}
-                      <span>{item.title}</span>
+                    <div className="flex items-center gap-3">
+                      {item.icon && <item.icon className="h-4 w-4" />}
+                      <span className="text-sm font-medium">{item.title}</span>
                     </div>
                     {item.badge && (
-                      <Badge variant="secondary" className="ml-auto text-xs">
+                      <Badge variant="secondary" className="ml-auto text-xs px-1.5 py-0.5">
                         {item.badge}
                       </Badge>
                     )}
                   </a>
                 ) : (
                   <div className="flex items-center justify-between w-full">
-                    <div className="flex items-center">
-                      {item.icon && <item.icon />}
-                      <span>{item.title}</span>
+                    <div className="flex items-center gap-3">
+                      {item.icon && <item.icon className="h-4 w-4" />}
+                      <span className="text-sm font-medium">{item.title}</span>
                     </div>
                     {item.badge && (
-                      <Badge variant="secondary" className="ml-auto text-xs">
+                      <Badge variant="secondary" className="ml-auto text-xs px-1.5 py-0.5">
                         {item.badge}
                       </Badge>
                     )}

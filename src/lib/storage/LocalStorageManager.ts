@@ -99,7 +99,53 @@ export class LocalStorageManager {
             const serializedData = this.serialize(data);
 
             if (this.isLocalStorageAvailable()) {
-                localStorage.setItem(key, serializedData);
+                try {
+                    localStorage.setItem(key, serializedData);
+                } catch (storageError) {
+                    // Handle quota exceeded error
+                    if (storageError instanceof Error && storageError.name === 'QuotaExceededError') {
+                        console.warn('LocalStorage quota exceeded, attempting aggressive cleanup...');
+                        
+                        // Try progressively more aggressive cleanup strategies
+                        const cleanupStrategies = [
+                            () => this.cleanupOldData(7),   // Clean data older than 7 days
+                            () => this.cleanupOldData(3),   // Clean data older than 3 days
+                            () => this.cleanupOldData(1),   // Clean data older than 1 day
+                            () => this.cleanupLargestItems(10), // Remove 10 largest items
+                            () => this.cleanupExcessSessions(), // Remove excess chat sessions
+                        ];
+
+                        let cleaned = false;
+                        for (const cleanup of cleanupStrategies) {
+                            try {
+                                const result = await cleanup();
+                                if (result.success && result.data && result.data > 0) {
+                                    console.log(`Cleaned up ${result.data} items`);
+                                    try {
+                                        localStorage.setItem(key, serializedData);
+                                        cleaned = true;
+                                        break;
+                                    } catch {
+                                        // Continue to next cleanup strategy
+                                        continue;
+                                    }
+                                }
+                            } catch (cleanupError) {
+                                console.warn('Cleanup strategy failed:', cleanupError);
+                                continue;
+                            }
+                        }
+
+                        if (!cleaned) {
+                            // Last resort: try to save to memory storage
+                            console.warn('All cleanup strategies failed, falling back to memory storage');
+                            this.pendingOperations.set(key, data);
+                            return { success: true };
+                        }
+                    } else {
+                        throw storageError;
+                    }
+                }
             } else {
                 // Fallback to memory storage
                 this.pendingOperations.set(key, data);
@@ -107,9 +153,13 @@ export class LocalStorageManager {
 
             return { success: true };
         } catch (error) {
+            console.error('Storage save error:', error);
             const storageError = error instanceof StorageError
                 ? error
-                : new StorageError('Failed to save data', 'SAVE_ERROR');
+                : new StorageError(
+                    `Failed to save data: ${error instanceof Error ? error.message : 'Unknown error'}`, 
+                    'SAVE_ERROR'
+                );
 
             return { success: false, error: storageError };
         }
@@ -501,6 +551,45 @@ export class LocalStorageManager {
         return info;
     }
 
+    // Cleanup excess chat sessions (keep only the most recent ones)
+    public async cleanupExcessSessions(maxSessions: number = 20): Promise<StorageResult<number>> {
+        try {
+            const sessionsResult = await this.loadChatSessions();
+            if (!sessionsResult.success || !sessionsResult.data) {
+                return { success: true, data: 0 };
+            }
+
+            const sessions = sessionsResult.data;
+            if (sessions.length <= maxSessions) {
+                return { success: true, data: 0 };
+            }
+
+            // Sort by updatedAt and keep only the most recent
+            const sortedSessions = sessions.sort((a, b) => {
+                const dateA = new Date(a.updatedAt);
+                const dateB = new Date(b.updatedAt);
+                return dateB.getTime() - dateA.getTime();
+            });
+
+            const sessionsToDelete = sortedSessions.slice(maxSessions);
+            let deletedCount = 0;
+
+            for (const session of sessionsToDelete) {
+                const result = await this.removeChatSession(session.id);
+                if (result.success) {
+                    deletedCount++;
+                }
+            }
+
+            return { success: true, data: deletedCount };
+        } catch (error) {
+            return {
+                success: false,
+                error: new StorageError('Failed to cleanup excess sessions', 'CLEANUP_SESSIONS_ERROR')
+            };
+        }
+    }
+
     // Cleanup old data based on age
     public async cleanupOldData(maxAgeInDays: number = 30): Promise<StorageResult<number>> {
         try {
@@ -545,6 +634,49 @@ export class LocalStorageManager {
             };
         }
     }
+
+    // Cleanup largest items to free up space
+    public async cleanupLargestItems(count: number = 5): Promise<StorageResult<number>> {
+        try {
+            let cleanedCount = 0;
+
+            if (this.isLocalStorageAvailable()) {
+                const items: { key: string; size: number }[] = [];
+
+                // Calculate size of each devorch item
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    if (key && key.startsWith('devorch_')) {
+                        const data = localStorage.getItem(key);
+                        if (data) {
+                            items.push({
+                                key,
+                                size: new Blob([data]).size
+                            });
+                        }
+                    }
+                }
+
+                // Sort by size (largest first) and remove the largest items
+                items.sort((a, b) => b.size - a.size);
+                const itemsToRemove = items.slice(0, count);
+
+                itemsToRemove.forEach(item => {
+                    localStorage.removeItem(item.key);
+                    cleanedCount++;
+                });
+            }
+
+            return { success: true, data: cleanedCount };
+        } catch (error) {
+            return {
+                success: false,
+                error: new StorageError('Failed to cleanup largest items', 'CLEANUP_ERROR')
+            };
+        }
+    }
+
+
 
     // Destroy instance (for testing or cleanup)
     public destroy(): void {

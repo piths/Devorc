@@ -16,7 +16,16 @@ import {
   Trash2,
   Copy,
   Undo,
-  Redo
+  Redo,
+  Minus,
+  Hexagon,
+  Image,
+  StickyNote,
+  Workflow,
+  Hand,
+  ZoomIn,
+  ZoomOut,
+  RotateCcw
 } from 'lucide-react';
 import { useCanvas } from '@/contexts/CanvasContext';
 import { CanvasState } from '@/types/canvas';
@@ -43,13 +52,21 @@ export const CanvasToolbar: React.FC<CanvasToolbarProps> = ({ stageRef }) => {
     project,
     connectionStart,
     cancelConnection,
+    viewport,
+    updateViewport,
   } = useCanvas();
 
   const tools = [
     { id: 'select', icon: MousePointer2, label: 'Select' },
+    { id: 'hand', icon: Hand, label: 'Pan' },
     { id: 'text', icon: Type, label: 'Text' },
     { id: 'rectangle', icon: Square, label: 'Rectangle' },
     { id: 'circle', icon: Circle, label: 'Circle' },
+    { id: 'line', icon: Minus, label: 'Line' },
+    { id: 'polygon', icon: Hexagon, label: 'Polygon' },
+    { id: 'sticky-note', icon: StickyNote, label: 'Sticky Note' },
+    { id: 'flowchart-shape', icon: Workflow, label: 'Flowchart Shape' },
+    { id: 'image', icon: Image, label: 'Image' },
     { id: 'connector', icon: ArrowRight, label: 'Connector' },
   ] as const;
 
@@ -67,6 +84,18 @@ export const CanvasToolbar: React.FC<CanvasToolbarProps> = ({ stageRef }) => {
     if (stageRef) {
       exportCanvas(format, stageRef);
     }
+  };
+
+  const handleZoomIn = () => {
+    updateViewport({ zoom: Math.min(viewport.zoom * 1.2, 5) });
+  };
+
+  const handleZoomOut = () => {
+    updateViewport({ zoom: Math.max(viewport.zoom / 1.2, 0.1) });
+  };
+
+  const handleResetZoom = () => {
+    updateViewport({ zoom: 1, x: 0, y: 0 });
   };
 
   return (
@@ -181,6 +210,41 @@ export const CanvasToolbar: React.FC<CanvasToolbarProps> = ({ stageRef }) => {
           title="Delete Selected"
         >
           <Trash2 className="h-4 w-4" />
+        </Button>
+      </div>
+
+      <Separator orientation="vertical" className="h-6" />
+
+      {/* Zoom Controls */}
+      <div className="flex items-center gap-1">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={handleZoomOut}
+          className="h-8 w-8 p-0"
+          title="Zoom Out"
+        >
+          <ZoomOut className="h-4 w-4" />
+        </Button>
+        
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={handleResetZoom}
+          className="h-8 px-2 text-xs"
+          title="Reset Zoom"
+        >
+          {Math.round(viewport.zoom * 100)}%
+        </Button>
+        
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={handleZoomIn}
+          className="h-8 w-8 p-0"
+          title="Zoom In"
+        >
+          <ZoomIn className="h-4 w-4" />
         </Button>
       </div>
 

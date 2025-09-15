@@ -1,11 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { Plus, MessageSquare, Trash2, FileText, Calendar, MoreHorizontal } from 'lucide-react';
+import { Plus, Search, MoreHorizontal, Trash2, HardDrive } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Badge } from '@/components/ui/badge';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,6 +20,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { StorageManagerDialog } from './storage-manager-dialog';
 import { useAIChat } from '@/hooks/useAIChat';
 import { ChatSession } from '@/types/chat';
 import { cn } from '@/lib/utils';
@@ -40,6 +39,7 @@ export function ChatSessions({ className }: ChatSessionsProps) {
     createNewSession,
     switchToSession,
     deleteSession,
+    deleteAllSessions,
   } = useAIChat();
 
   const handleCreateSession = async () => {
@@ -59,138 +59,142 @@ export function ChatSessions({ className }: ChatSessionsProps) {
     }
   };
 
-  const formatDate = (date: Date) => {
-    const now = new Date();
-    const diffInHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60);
-
-    if (diffInHours < 1) {
-      return 'Just now';
-    } else if (diffInHours < 24) {
-      return `${Math.floor(diffInHours)}h ago`;
-    } else if (diffInHours < 24 * 7) {
-      return `${Math.floor(diffInHours / 24)}d ago`;
-    } else {
-      return date.toLocaleDateString();
+  const handleClearAllSessions = async () => {
+    try {
+      await deleteAllSessions();
+    } catch (error) {
+      console.error('Failed to clear all sessions:', error);
     }
-  };
-
-  const getSessionPreview = (session: ChatSession) => {
-    const lastUserMessage = [...session.messages]
-      .reverse()
-      .find(msg => msg.role === 'user');
-    
-    return lastUserMessage?.content.slice(0, 100) + 
-           (lastUserMessage?.content && lastUserMessage.content.length > 100 ? '...' : '') ||
-           'No messages yet';
   };
 
   return (
     <>
-      <Card className={cn('flex flex-col h-full', className)}>
-        <CardHeader className="flex-shrink-0">
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <MessageSquare className="w-5 h-5" />
-              Chat Sessions
-            </CardTitle>
-            <Button
-              size="sm"
-              onClick={handleCreateSession}
-              disabled={isLoading}
-              className="gap-2"
-            >
-              <Plus className="w-4 h-4" />
-              New Chat
-            </Button>
-          </div>
-        </CardHeader>
+      <div className={cn('flex flex-col h-full bg-background', className)}>
+        {/* Navigation Buttons */}
+        <div className="p-4 space-y-2">
+          <Button
+            variant="ghost"
+            className="w-full justify-start gap-2 h-10 text-foreground hover:bg-muted/50"
+            onClick={handleCreateSession}
+            disabled={isLoading}
+          >
+            <Plus className="w-4 h-4" />
+            New chat
+          </Button>
+          
+          <Button
+            variant="ghost"
+            className="w-full justify-start gap-2 h-10 text-foreground hover:bg-muted/50"
+          >
+            <Search className="w-4 h-4" />
+            Search chats
+          </Button>
+        </div>
 
-        <CardContent className="flex-1 p-0">
+        {/* Chat Sessions List */}
+        <div className="flex-1 px-4">
+          <div className="flex items-center justify-between mb-3 px-2">
+            <div className="text-sm font-medium text-muted-foreground">
+              Chats
+            </div>
+            <div className="flex items-center gap-1">
+              <StorageManagerDialog>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-xs text-muted-foreground hover:text-foreground"
+                >
+                  <HardDrive className="w-3 h-3" />
+                </Button>
+              </StorageManagerDialog>
+              
+              {sessions.length > 0 && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-xs text-muted-foreground hover:text-foreground"
+                    >
+                      <MoreHorizontal className="w-3 h-3" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem
+                      onClick={handleClearAllSessions}
+                      disabled={isLoading}
+                      className="text-destructive focus:text-destructive"
+                    >
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Clear All Sessions
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
+            </div>
+          </div>
+          
           <ScrollArea className="h-full">
             {sessions.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full p-8 text-center">
-                <MessageSquare className="w-12 h-12 text-muted-foreground mb-4" />
-                <h3 className="text-lg font-medium mb-2">No chat sessions</h3>
-                <p className="text-muted-foreground mb-4">
-                  Create your first chat session to get started
-                </p>
-                <Button onClick={handleCreateSession} disabled={isLoading}>
+              <div className="flex flex-col items-center justify-center h-32 text-center">
+                <p className="text-sm text-muted-foreground mb-2">No chat sessions</p>
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={handleCreateSession}
+                  disabled={isLoading}
+                  className="mt-2"
+                >
                   <Plus className="w-4 h-4 mr-2" />
                   Create Session
                 </Button>
               </div>
             ) : (
-              <div className="p-4 space-y-2">
+              <div className="space-y-1">
                 {sessions.map((session) => (
                   <div
                     key={session.id}
                     className={cn(
-                      'group relative p-3 rounded-lg border cursor-pointer transition-colors hover:bg-muted/50',
-                      activeSession?.id === session.id && 'bg-muted border-primary'
+                      'group relative flex items-center justify-between px-2 py-2 rounded-md cursor-pointer transition-colors hover:bg-muted/50',
+                      activeSession?.id === session.id && 'bg-muted'
                     )}
                     onClick={() => switchToSession(session.id)}
                   >
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h4 className="font-medium text-sm truncate">
-                            {session.name}
-                          </h4>
-                          {session.codebaseContext && (
-                            <Badge variant="secondary" className="text-xs">
-                              <FileText className="w-3 h-3 mr-1" />
-                              {session.codebaseContext.files.length}
-                            </Badge>
-                          )}
-                        </div>
-                        
-                        <p className="text-xs text-muted-foreground line-clamp-2 mb-2">
-                          {getSessionPreview(session)}
-                        </p>
-                        
-                        <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                          <span className="flex items-center gap-1">
-                            <Calendar className="w-3 h-3" />
-                            {formatDate(session.updatedAt)}
-                          </span>
-                          <span>
-                            {session.messages.length} messages
-                          </span>
-                        </div>
-                      </div>
-
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="opacity-0 group-hover:opacity-100 transition-opacity"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <MoreHorizontal className="w-4 h-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSessionToDelete(session);
-                            }}
-                            className="text-destructive"
-                          >
-                            <Trash2 className="w-4 h-4 mr-2" />
-                            Delete Session
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
+                    <span className="text-sm text-foreground truncate flex-1">
+                      {session.name}
+                    </span>
+                    
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6 p-0"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <MoreHorizontal className="w-4 h-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSessionToDelete(session);
+                          }}
+                          className="text-destructive"
+                        >
+                          <Trash2 className="w-4 h-4 mr-2" />
+                          Delete Session
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 ))}
               </div>
             )}
           </ScrollArea>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={!!sessionToDelete} onOpenChange={() => setSessionToDelete(null)}>

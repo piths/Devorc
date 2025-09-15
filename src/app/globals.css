@@ -173,6 +173,13 @@
   .bg-grid-white\/\[0\.02\] {
     background-image: radial-gradient(circle, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
   }
+
+  /* Chat page specific styles */
+  .chat-page-container {
+    overflow: hidden !important;
+    height: calc(100vh - var(--header-height)) !important;
+    max-height: calc(100vh - var(--header-height)) !important;
+  }
 }
 
 @keyframes fadeIn {

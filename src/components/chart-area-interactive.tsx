@@ -33,114 +33,119 @@ import {
 export const description = "An interactive area chart"
 
 const chartData = [
-  { date: "2024-04-01", desktop: 222, mobile: 150 },
-  { date: "2024-04-02", desktop: 97, mobile: 180 },
-  { date: "2024-04-03", desktop: 167, mobile: 120 },
-  { date: "2024-04-04", desktop: 242, mobile: 260 },
-  { date: "2024-04-05", desktop: 373, mobile: 290 },
-  { date: "2024-04-06", desktop: 301, mobile: 340 },
-  { date: "2024-04-07", desktop: 245, mobile: 180 },
-  { date: "2024-04-08", desktop: 409, mobile: 320 },
-  { date: "2024-04-09", desktop: 59, mobile: 110 },
-  { date: "2024-04-10", desktop: 261, mobile: 190 },
-  { date: "2024-04-11", desktop: 327, mobile: 350 },
-  { date: "2024-04-12", desktop: 292, mobile: 210 },
-  { date: "2024-04-13", desktop: 342, mobile: 380 },
-  { date: "2024-04-14", desktop: 137, mobile: 220 },
-  { date: "2024-04-15", desktop: 120, mobile: 170 },
-  { date: "2024-04-16", desktop: 138, mobile: 190 },
-  { date: "2024-04-17", desktop: 446, mobile: 360 },
-  { date: "2024-04-18", desktop: 364, mobile: 410 },
-  { date: "2024-04-19", desktop: 243, mobile: 180 },
-  { date: "2024-04-20", desktop: 89, mobile: 150 },
-  { date: "2024-04-21", desktop: 137, mobile: 200 },
-  { date: "2024-04-22", desktop: 224, mobile: 170 },
-  { date: "2024-04-23", desktop: 138, mobile: 230 },
-  { date: "2024-04-24", desktop: 387, mobile: 290 },
-  { date: "2024-04-25", desktop: 215, mobile: 250 },
-  { date: "2024-04-26", desktop: 75, mobile: 130 },
-  { date: "2024-04-27", desktop: 383, mobile: 420 },
-  { date: "2024-04-28", desktop: 122, mobile: 180 },
-  { date: "2024-04-29", desktop: 315, mobile: 240 },
-  { date: "2024-04-30", desktop: 454, mobile: 380 },
-  { date: "2024-05-01", desktop: 165, mobile: 220 },
-  { date: "2024-05-02", desktop: 293, mobile: 310 },
-  { date: "2024-05-03", desktop: 247, mobile: 190 },
-  { date: "2024-05-04", desktop: 385, mobile: 420 },
-  { date: "2024-05-05", desktop: 481, mobile: 390 },
-  { date: "2024-05-06", desktop: 498, mobile: 520 },
-  { date: "2024-05-07", desktop: 388, mobile: 300 },
-  { date: "2024-05-08", desktop: 149, mobile: 210 },
-  { date: "2024-05-09", desktop: 227, mobile: 180 },
-  { date: "2024-05-10", desktop: 293, mobile: 330 },
-  { date: "2024-05-11", desktop: 335, mobile: 270 },
-  { date: "2024-05-12", desktop: 197, mobile: 240 },
-  { date: "2024-05-13", desktop: 197, mobile: 160 },
-  { date: "2024-05-14", desktop: 448, mobile: 490 },
-  { date: "2024-05-15", desktop: 473, mobile: 380 },
-  { date: "2024-05-16", desktop: 338, mobile: 400 },
-  { date: "2024-05-17", desktop: 499, mobile: 420 },
-  { date: "2024-05-18", desktop: 315, mobile: 350 },
-  { date: "2024-05-19", desktop: 235, mobile: 180 },
-  { date: "2024-05-20", desktop: 177, mobile: 230 },
-  { date: "2024-05-21", desktop: 82, mobile: 140 },
-  { date: "2024-05-22", desktop: 81, mobile: 120 },
-  { date: "2024-05-23", desktop: 252, mobile: 290 },
-  { date: "2024-05-24", desktop: 294, mobile: 220 },
-  { date: "2024-05-25", desktop: 201, mobile: 250 },
-  { date: "2024-05-26", desktop: 213, mobile: 170 },
-  { date: "2024-05-27", desktop: 420, mobile: 460 },
-  { date: "2024-05-28", desktop: 233, mobile: 190 },
-  { date: "2024-05-29", desktop: 78, mobile: 130 },
-  { date: "2024-05-30", desktop: 340, mobile: 280 },
-  { date: "2024-05-31", desktop: 178, mobile: 230 },
-  { date: "2024-06-01", desktop: 178, mobile: 200 },
-  { date: "2024-06-02", desktop: 470, mobile: 410 },
-  { date: "2024-06-03", desktop: 103, mobile: 160 },
-  { date: "2024-06-04", desktop: 439, mobile: 380 },
-  { date: "2024-06-05", desktop: 88, mobile: 140 },
-  { date: "2024-06-06", desktop: 294, mobile: 250 },
-  { date: "2024-06-07", desktop: 323, mobile: 370 },
-  { date: "2024-06-08", desktop: 385, mobile: 320 },
-  { date: "2024-06-09", desktop: 438, mobile: 480 },
-  { date: "2024-06-10", desktop: 155, mobile: 200 },
-  { date: "2024-06-11", desktop: 92, mobile: 150 },
-  { date: "2024-06-12", desktop: 492, mobile: 420 },
-  { date: "2024-06-13", desktop: 81, mobile: 130 },
-  { date: "2024-06-14", desktop: 426, mobile: 380 },
-  { date: "2024-06-15", desktop: 307, mobile: 350 },
-  { date: "2024-06-16", desktop: 371, mobile: 310 },
-  { date: "2024-06-17", desktop: 475, mobile: 520 },
-  { date: "2024-06-18", desktop: 107, mobile: 170 },
-  { date: "2024-06-19", desktop: 341, mobile: 290 },
-  { date: "2024-06-20", desktop: 408, mobile: 450 },
-  { date: "2024-06-21", desktop: 169, mobile: 210 },
-  { date: "2024-06-22", desktop: 317, mobile: 270 },
-  { date: "2024-06-23", desktop: 480, mobile: 530 },
-  { date: "2024-06-24", desktop: 132, mobile: 180 },
-  { date: "2024-06-25", desktop: 141, mobile: 190 },
-  { date: "2024-06-26", desktop: 434, mobile: 380 },
-  { date: "2024-06-27", desktop: 448, mobile: 490 },
-  { date: "2024-06-28", desktop: 149, mobile: 200 },
-  { date: "2024-06-29", desktop: 103, mobile: 160 },
-  { date: "2024-06-30", desktop: 446, mobile: 400 },
+  { date: "2024-04-01", completed: 12, inProgress: 8, total: 68 },
+  { date: "2024-04-02", completed: 14, inProgress: 9, total: 68 },
+  { date: "2024-04-03", completed: 16, inProgress: 10, total: 68 },
+  { date: "2024-04-04", completed: 18, inProgress: 11, total: 68 },
+  { date: "2024-04-05", completed: 20, inProgress: 12, total: 68 },
+  { date: "2024-04-06", completed: 22, inProgress: 13, total: 68 },
+  { date: "2024-04-07", completed: 24, inProgress: 14, total: 68 },
+  { date: "2024-04-08", completed: 26, inProgress: 15, total: 68 },
+  { date: "2024-04-09", completed: 28, inProgress: 16, total: 68 },
+  { date: "2024-04-10", completed: 30, inProgress: 17, total: 68 },
+  { date: "2024-04-11", completed: 32, inProgress: 18, total: 68 },
+  { date: "2024-04-12", completed: 34, inProgress: 19, total: 68 },
+  { date: "2024-04-13", completed: 36, inProgress: 20, total: 68 },
+  { date: "2024-04-14", completed: 38, inProgress: 21, total: 68 },
+  { date: "2024-04-15", completed: 40, inProgress: 22, total: 68 },
+  { date: "2024-04-16", completed: 42, inProgress: 23, total: 68 },
+  { date: "2024-04-17", completed: 44, inProgress: 24, total: 68 },
+  { date: "2024-04-18", completed: 46, inProgress: 25, total: 68 },
+  { date: "2024-04-19", completed: 48, inProgress: 26, total: 68 },
+  { date: "2024-04-20", completed: 50, inProgress: 27, total: 68 },
+  { date: "2024-04-21", completed: 52, inProgress: 28, total: 68 },
+  { date: "2024-04-22", completed: 54, inProgress: 29, total: 68 },
+  { date: "2024-04-23", completed: 56, inProgress: 30, total: 68 },
+  { date: "2024-04-24", completed: 58, inProgress: 31, total: 68 },
+  { date: "2024-04-25", completed: 60, inProgress: 32, total: 68 },
+  { date: "2024-04-26", completed: 62, inProgress: 33, total: 68 },
+  { date: "2024-04-27", completed: 64, inProgress: 34, total: 68 },
+  { date: "2024-04-28", completed: 66, inProgress: 35, total: 68 },
+  { date: "2024-04-29", completed: 68, inProgress: 36, total: 68 },
+  { date: "2024-04-30", completed: 70, inProgress: 38, total: 68 },
+  { date: "2024-05-01", completed: 72, inProgress: 40, total: 68 },
+  { date: "2024-05-02", completed: 74, inProgress: 42, total: 68 },
+  { date: "2024-05-03", completed: 76, inProgress: 44, total: 68 },
+  { date: "2024-05-04", completed: 78, inProgress: 46, total: 68 },
+  { date: "2024-05-05", completed: 80, inProgress: 48, total: 68 },
+  { date: "2024-05-06", completed: 82, inProgress: 50, total: 68 },
+  { date: "2024-05-07", completed: 84, inProgress: 52, total: 68 },
+  { date: "2024-05-08", completed: 86, inProgress: 54, total: 68 },
+  { date: "2024-05-09", completed: 88, inProgress: 56, total: 68 },
+  { date: "2024-05-10", completed: 90, inProgress: 58, total: 68 },
+  { date: "2024-05-11", completed: 92, inProgress: 60, total: 68 },
+  { date: "2024-05-12", completed: 94, inProgress: 62, total: 68 },
+  { date: "2024-05-13", completed: 96, inProgress: 64, total: 68 },
+  { date: "2024-05-14", completed: 98, inProgress: 66, total: 68 },
+  { date: "2024-05-15", completed: 100, inProgress: 68, total: 68 },
+  { date: "2024-05-16", completed: 102, inProgress: 70, total: 68 },
+  { date: "2024-05-17", completed: 104, inProgress: 72, total: 68 },
+  { date: "2024-05-18", completed: 106, inProgress: 74, total: 68 },
+  { date: "2024-05-19", completed: 108, inProgress: 76, total: 68 },
+  { date: "2024-05-20", completed: 110, inProgress: 78, total: 68 },
+  { date: "2024-05-21", completed: 112, inProgress: 80, total: 68 },
+  { date: "2024-05-22", completed: 114, inProgress: 82, total: 68 },
+  { date: "2024-05-23", completed: 116, inProgress: 84, total: 68 },
+  { date: "2024-05-24", completed: 118, inProgress: 86, total: 68 },
+  { date: "2024-05-25", completed: 120, inProgress: 88, total: 68 },
+  { date: "2024-05-26", completed: 122, inProgress: 90, total: 68 },
+  { date: "2024-05-27", completed: 124, inProgress: 92, total: 68 },
+  { date: "2024-05-28", completed: 126, inProgress: 94, total: 68 },
+  { date: "2024-05-29", completed: 128, inProgress: 96, total: 68 },
+  { date: "2024-05-30", completed: 130, inProgress: 98, total: 68 },
+  { date: "2024-05-31", completed: 132, inProgress: 100, total: 68 },
+  { date: "2024-06-01", completed: 134, inProgress: 102, total: 68 },
+  { date: "2024-06-02", completed: 136, inProgress: 104, total: 68 },
+  { date: "2024-06-03", completed: 138, inProgress: 106, total: 68 },
+  { date: "2024-06-04", completed: 140, inProgress: 108, total: 68 },
+  { date: "2024-06-05", completed: 142, inProgress: 110, total: 68 },
+  { date: "2024-06-06", completed: 144, inProgress: 112, total: 68 },
+  { date: "2024-06-07", completed: 146, inProgress: 114, total: 68 },
+  { date: "2024-06-08", completed: 148, inProgress: 116, total: 68 },
+  { date: "2024-06-09", completed: 150, inProgress: 118, total: 68 },
+  { date: "2024-06-10", completed: 152, inProgress: 120, total: 68 },
+  { date: "2024-06-11", completed: 154, inProgress: 122, total: 68 },
+  { date: "2024-06-12", completed: 156, inProgress: 124, total: 68 },
+  { date: "2024-06-13", completed: 158, inProgress: 126, total: 68 },
+  { date: "2024-06-14", completed: 160, inProgress: 128, total: 68 },
+  { date: "2024-06-15", completed: 162, inProgress: 130, total: 68 },
+  { date: "2024-06-16", completed: 164, inProgress: 132, total: 68 },
+  { date: "2024-06-17", completed: 166, inProgress: 134, total: 68 },
+  { date: "2024-06-18", completed: 168, inProgress: 136, total: 68 },
+  { date: "2024-06-19", completed: 170, inProgress: 138, total: 68 },
+  { date: "2024-06-20", completed: 172, inProgress: 140, total: 68 },
+  { date: "2024-06-21", completed: 174, inProgress: 142, total: 68 },
+  { date: "2024-06-22", completed: 176, inProgress: 144, total: 68 },
+  { date: "2024-06-23", completed: 178, inProgress: 146, total: 68 },
+  { date: "2024-06-24", completed: 180, inProgress: 148, total: 68 },
+  { date: "2024-06-25", completed: 182, inProgress: 150, total: 68 },
+  { date: "2024-06-26", completed: 184, inProgress: 152, total: 68 },
+  { date: "2024-06-27", completed: 186, inProgress: 154, total: 68 },
+  { date: "2024-06-28", completed: 188, inProgress: 156, total: 68 },
+  { date: "2024-06-29", completed: 190, inProgress: 158, total: 68 },
+  { date: "2024-06-30", completed: 192, inProgress: 160, total: 68 },
 ]
 
 const chartConfig = {
-  visitors: {
-    label: "Visitors",
+  completed: {
+    label: "Completed Tasks",
+    color: "hsl(var(--chart-1))",
   },
-  desktop: {
-    label: "Desktop",
-    color: "var(--primary)",
+  inProgress: {
+    label: "In Progress",
+    color: "hsl(var(--chart-2))",
   },
-  mobile: {
-    label: "Mobile",
-    color: "var(--primary)",
+  total: {
+    label: "Total Tasks",
+    color: "hsl(var(--chart-3))",
   },
 } satisfies ChartConfig
 
-export function ChartAreaInteractive() {
+interface ChartAreaInteractiveProps {
+  data?: unknown[]
+}
+
+export function ChartAreaInteractive({ data }: ChartAreaInteractiveProps) {
   const isMobile = useIsMobile()
   const [timeRange, setTimeRange] = React.useState("90d")
 
@@ -167,10 +172,10 @@ export function ChartAreaInteractive() {
   return (
     <Card className="@container/card">
       <CardHeader>
-        <CardTitle>Total Visitors</CardTitle>
+        <CardTitle>Project Progress</CardTitle>
         <CardDescription>
           <span className="hidden @[540px]/card:block">
-            Total for the last 3 months
+            Task completion trends over the last 3 months
           </span>
           <span className="@[540px]/card:hidden">Last 3 months</span>
         </CardDescription>
@@ -215,27 +220,27 @@ export function ChartAreaInteractive() {
         >
           <AreaChart data={filteredData}>
             <defs>
-              <linearGradient id="fillDesktop" x1="0" y1="0" x2="0" y2="1">
+              <linearGradient id="fillCompleted" x1="0" y1="0" x2="0" y2="1">
                 <stop
                   offset="5%"
-                  stopColor="var(--color-desktop)"
+                  stopColor="var(--color-completed)"
                   stopOpacity={1.0}
                 />
                 <stop
                   offset="95%"
-                  stopColor="var(--color-desktop)"
+                  stopColor="var(--color-completed)"
                   stopOpacity={0.1}
                 />
               </linearGradient>
-              <linearGradient id="fillMobile" x1="0" y1="0" x2="0" y2="1">
+              <linearGradient id="fillInProgress" x1="0" y1="0" x2="0" y2="1">
                 <stop
                   offset="5%"
-                  stopColor="var(--color-mobile)"
+                  stopColor="var(--color-inProgress)"
                   stopOpacity={0.8}
                 />
                 <stop
                   offset="95%"
-                  stopColor="var(--color-mobile)"
+                  stopColor="var(--color-inProgress)"
                   stopOpacity={0.1}
                 />
               </linearGradient>
@@ -270,17 +275,17 @@ export function ChartAreaInteractive() {
               }
             />
             <Area
-              dataKey="mobile"
+              dataKey="inProgress"
               type="natural"
-              fill="url(#fillMobile)"
-              stroke="var(--color-mobile)"
+              fill="url(#fillInProgress)"
+              stroke="var(--color-inProgress)"
               stackId="a"
             />
             <Area
-              dataKey="desktop"
+              dataKey="completed"
               type="natural"
-              fill="url(#fillDesktop)"
-              stroke="var(--color-desktop)"
+              fill="url(#fillCompleted)"
+              stroke="var(--color-completed)"
               stackId="a"
             />
           </AreaChart>

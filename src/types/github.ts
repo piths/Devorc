@@ -173,6 +173,41 @@ export interface AuthResult {
   error?: string;
 }
 
+export interface GitHubTreeItem {
+  path: string;
+  mode: string;
+  type: 'blob' | 'tree';
+  sha: string;
+  size?: number;
+  url: string;
+}
+
+export interface GitHubTree {
+  sha: string;
+  url: string;
+  tree: GitHubTreeItem[];
+  truncated: boolean;
+}
+
+export interface GitHubFileContent {
+  name: string;
+  path: string;
+  sha: string;
+  size: number;
+  url: string;
+  html_url: string;
+  git_url: string;
+  download_url: string;
+  type: 'file' | 'dir';
+  content?: string; // Base64 encoded content for files
+  encoding?: string;
+  _links: {
+    self: string;
+    git: string;
+    html: string;
+  };
+}
+
 export class GitHubApiError extends Error {
   constructor(
     public status: number,

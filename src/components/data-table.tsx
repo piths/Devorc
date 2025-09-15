@@ -31,6 +31,9 @@ import {
   IconGripVertical,
   IconLayoutColumns,
   IconLoader,
+  IconSearch,
+  IconFilter,
+  IconDownload,
   IconPlus,
   IconTrendingUp,
 } from "@tabler/icons-react"
@@ -401,6 +404,51 @@ export function DataTable({
     }
   }
 
+  // Helpers: filters and export
+  const applyHeaderFilter = (value: string) => {
+    table.getColumn("header")?.setFilterValue(value)
+  }
+
+  const applyStatusFilter = (value: string) => {
+    if (!value || value === "all") {
+      table.getColumn("status")?.setFilterValue("")
+      return
+    }
+    // Use a broad match so both "In Process" and "In Progress" are included
+    const normalized = value === "in-progress" ? "In" : value
+    table.getColumn("status")?.setFilterValue(normalized)
+  }
+
+  const exportCsv = () => {
+    const rows = table.getFilteredRowModel().rows
+    const headers = ["Header", "Section Type", "Status", "Target", "Limit", "Reviewer"]
+    const csv = [
+      headers.join(","),
+      ...rows.map((r) => {
+        const item = r.original as z.infer<typeof schema>
+        const vals = [
+          item.header,
+          item.type,
+          item.status,
+          item.target,
+          item.limit,
+          item.reviewer,
+        ]
+        return vals
+          .map((v) => `"${String(v).replace(/"/g, '""')}"`)
+          .join(",")
+      }),
+    ].join("\n")
+
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = "dashboard-outline.csv"
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
   return (
     <Tabs
       defaultValue="outline"
@@ -479,6 +527,40 @@ export function DataTable({
         value="outline"
         className="relative flex flex-col gap-4 overflow-auto px-4 lg:px-6"
       >
+        {/* Filter toolbar */}
+        <div className="flex flex-col gap-2 pt-2 pb-1 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex w-full items-center gap-2 lg:w-1/2">
+            <div className="relative flex-1">
+              <IconSearch className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Search by header..."
+                className="pl-9"
+                onChange={(e) => applyHeaderFilter(e.target.value)}
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <IconFilter className="size-4 text-muted-foreground" />
+              <Select defaultValue="all" onValueChange={applyStatusFilter}>
+                <SelectTrigger className="w-36" size="sm">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Statuses</SelectItem>
+                  <SelectItem value="done">Done</SelectItem>
+                  <SelectItem value="in-progress">In Progress</SelectItem>
+                  <SelectItem value="Not Started">Not Started</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={exportCsv}>
+              <IconDownload />
+              Export CSV
+            </Button>
+          </div>
+        </div>
+
         <div className="overflow-hidden rounded-lg border">
           <DndContext
             collisionDetection={closestCenter}

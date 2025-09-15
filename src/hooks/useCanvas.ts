@@ -29,6 +29,8 @@ export const useCanvas = (): CanvasState & CanvasActions => {
   const [isDragging] = useState(false);
   const [isDrawing] = useState(false);
   const [connectionStart, setConnectionStart] = useState<string | null>(null);
+  const [isGrouping] = useState(false);
+  const [isMultiSelecting] = useState(false);
 
   const createElement = useCallback((elementData: Partial<CanvasElement>) => {
     if (!project) return;
@@ -240,6 +242,8 @@ export const useCanvas = (): CanvasState & CanvasActions => {
     isDragging,
     isDrawing,
     connectionStart,
+    isGrouping,
+    isMultiSelecting,
     createElement,
     updateElement,
     deleteElement,

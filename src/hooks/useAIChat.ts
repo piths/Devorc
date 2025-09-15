@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { ChatSession, ChatMessage, CodebaseContext, ChatError, TypingIndicator, CodeReference } from '@/types/chat';
+import { ChatSession, ChatMessage, CodebaseContext, ChatError, TypingIndicator, CodeReference, CurrentFileContext } from '@/types/chat';
 import { ChatStorageManager } from '@/lib/storage/ChatStorageManager';
-import { OpenAIApiClient } from '@/lib/openai/OpenAIApiClient';
 import { FileUploadHandler } from '@/lib/chat/FileUploadHandler';
 import { CodeAnalysisService } from '@/lib/chat/CodeAnalysisService';
 
@@ -11,31 +10,18 @@ export function useAIChat() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<ChatError | null>(null);
   const [typingIndicator, setTypingIndicator] = useState<TypingIndicator>({ isVisible: false });
+  const [currentFileContext, setCurrentFileContext] = useState<CurrentFileContext | null>(null);
   
   const storageManager = useRef(new ChatStorageManager());
-  const openaiClient = useRef<OpenAIApiClient | null>(null);
   const analysisService = useRef<CodeAnalysisService | null>(null);
 
-  // Initialize clients lazily
-  const getOpenAIClient = useCallback(() => {
-    if (!openaiClient.current) {
-      try {
-        openaiClient.current = new OpenAIApiClient();
-      } catch (error) {
-        console.warn('OpenAI client initialization failed:', error);
-        return null;
-      }
-    }
-    return openaiClient.current;
-  }, []);
-
+  // Initialize analysis service lazily (without OpenAI client for local analysis)
   const getAnalysisService = useCallback(() => {
     if (!analysisService.current) {
-      const client = getOpenAIClient();
-      analysisService.current = new CodeAnalysisService(client || undefined);
+      analysisService.current = new CodeAnalysisService();
     }
     return analysisService.current;
-  }, [getOpenAIClient]);
+  }, []);
 
   const loadSessions = useCallback(async () => {
     try {
@@ -105,12 +91,34 @@ export function useAIChat() {
     }
   }, [sessions, activeSession]);
 
+  const deleteAllSessions = useCallback(async () => {
+    try {
+      // Delete all sessions from storage
+      for (const session of sessions) {
+        await storageManager.current.deleteChatSession(session.id);
+      }
+      
+      // Clear all sessions from state
+      setSessions([]);
+      setActiveSession(null);
+      
+      // Clear active session from storage
+      await storageManager.current.clearActiveSession();
+    } catch (error) {
+      console.error('Failed to delete all sessions:', error);
+      throw error;
+    }
+  }, [sessions]);
+
   const sendMessage = useCallback(async (content: string) => {
-    if (!activeSession) {
-      throw new Error('No active session');
+    let session = activeSession;
+    
+    // Create a new session if none exists
+    if (!session) {
+      console.log('No active session, creating new one...');
+      session = await createNewSession('New Chat');
     }
 
-    const client = getOpenAIClient();
     const analysisService = getAnalysisService();
 
     const userMessage: ChatMessage = {
@@ -122,46 +130,85 @@ export function useAIChat() {
 
     try {
       // Add user message
-      await storageManager.current.addMessageToSession(activeSession.id, userMessage);
+      await storageManager.current.addMessageToSession(session.id, userMessage);
       
       // Update local state
       const updatedSession = {
-        ...activeSession,
-        messages: [...activeSession.messages, userMessage],
+        ...session,
+        messages: [...session.messages, userMessage],
       };
       setActiveSession(updatedSession);
-      setSessions(prev => prev.map((s: ChatSession) => s.id === activeSession.id ? updatedSession : s));
+      setSessions(prev => prev.map((s: ChatSession) => s.id === session.id ? updatedSession : s));
 
       // Show typing indicator
       setTypingIndicator({ isVisible: true, message: 'Analyzing your code...' });
       setError(null);
 
       let response: { content: string; codeReferences?: CodeReference[] };
-      let codeReferences: CodeReference[] = [];
 
-      if (client && activeSession.codebaseContext) {
-        // Use enhanced contextual response with code analysis
-        const relevantFiles = analysisService.findRelevantFiles(content, activeSession.codebaseContext);
-        response = await client.generateContextualResponse(
+      // Enhance user message with current file context if available
+      let enhancedContent = content;
+      if (currentFileContext) {
+        enhancedContent = analysisService.enhanceQueryWithFileContext(
           content,
-          activeSession.codebaseContext,
-          relevantFiles.map(f => f.path)
+          currentFileContext.filePath,
+          currentFileContext.content,
+          currentFileContext.language
         );
-        codeReferences = response.codeReferences || [];
-      } else if (client) {
-        // Fallback to basic chat completion
-        const basicResponse = await client.chatCompletion(
-          updatedSession.messages,
-          activeSession.codebaseContext
-        );
-        response = { content: basicResponse.content, codeReferences: basicResponse.codeReferences };
-        codeReferences = basicResponse.codeReferences || [];
+      }
+
+      // Use API route for all OpenAI requests
+      if (session.codebaseContext) {
+        // Use enhanced contextual response with code analysis
+        const relevantFiles = analysisService.findRelevantFiles(enhancedContent, session.codebaseContext);
+        
+        const apiResponse = await fetch('/api/chat', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            type: 'contextual',
+            messages: updatedSession.messages,
+            query: enhancedContent,
+            context: session.codebaseContext,
+            relevantFiles: relevantFiles.map(f => f.path),
+          }),
+        });
+
+        if (!apiResponse.ok) {
+          const errorData = await apiResponse.json();
+          throw new Error(errorData.error || 'Failed to get AI response');
+        }
+
+        response = await apiResponse.json();
       } else {
-        // No AI client available
-        response = {
-          content: 'AI features are not available. Please configure your OpenAI API key to enable intelligent code analysis and suggestions.',
-          codeReferences: [],
+        // Fallback to basic chat completion with enhanced content
+        const messagesWithContext = [...updatedSession.messages];
+        // Replace the last user message with enhanced content
+        messagesWithContext[messagesWithContext.length - 1] = {
+          ...userMessage,
+          content: enhancedContent
         };
+        
+        const apiResponse = await fetch('/api/chat', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            type: 'chat',
+            messages: messagesWithContext,
+            context: session.codebaseContext,
+          }),
+        });
+
+        if (!apiResponse.ok) {
+          const errorData = await apiResponse.json();
+          throw new Error(errorData.error || 'Failed to get AI response');
+        }
+
+        response = await apiResponse.json();
       }
 
       const assistantMessage: ChatMessage = {
@@ -169,11 +216,11 @@ export function useAIChat() {
         role: 'assistant',
         content: response.content,
         timestamp: new Date(),
-        codeReferences,
+        codeReferences: response.codeReferences || [],
       };
 
       // Add assistant message
-      await storageManager.current.addMessageToSession(activeSession.id, assistantMessage);
+      await storageManager.current.addMessageToSession(session.id, assistantMessage);
       
       // Update local state
       const finalSession = {
@@ -181,33 +228,39 @@ export function useAIChat() {
         messages: [...updatedSession.messages, assistantMessage],
       };
       setActiveSession(finalSession);
-      setSessions(prev => prev.map((s: ChatSession) => s.id === activeSession.id ? finalSession : s));
+      setSessions(prev => prev.map((s: ChatSession) => s.id === session.id ? finalSession : s));
 
     } catch (error) {
       console.error('Failed to send message:', error);
-      const chatError = error as ChatError;
-      setError(chatError);
+      const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
+      setError({
+        type: 'unknown',
+        message: errorMessage,
+        retryable: true,
+      });
       
       // Add error message to chat
-      const errorMessage: ChatMessage = {
+      const errorChatMessage: ChatMessage = {
         id: `msg_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`,
         role: 'assistant',
-        content: `Sorry, I encountered an error: ${chatError.message}. ${chatError.retryable ? 'You can try again.' : ''}`,
+        content: `Sorry, I encountered an error: ${errorMessage}. You can try again.`,
         timestamp: new Date(),
       };
 
-      await storageManager.current.addMessageToSession(activeSession.id, errorMessage);
-      
-      const errorSession = {
-        ...activeSession,
-        messages: [...activeSession.messages, userMessage, errorMessage],
-      };
-      setActiveSession(errorSession);
-      setSessions(prev => prev.map((s: ChatSession) => s.id === activeSession.id ? errorSession : s));
+      if (activeSession) {
+        await storageManager.current.addMessageToSession(activeSession.id, errorChatMessage);
+        
+        const errorSession = {
+          ...activeSession,
+          messages: [...activeSession.messages, userMessage, errorChatMessage],
+        };
+        setActiveSession(errorSession);
+        setSessions(prev => prev.map((s: ChatSession) => s.id === activeSession.id ? errorSession : s));
+      }
     } finally {
       setTypingIndicator({ isVisible: false });
     }
-  }, [activeSession, getOpenAIClient, getAnalysisService]);
+  }, [activeSession, currentFileContext, getAnalysisService, createNewSession]);
 
   const uploadFiles = useCallback(async (files: FileList) => {
     try {
@@ -261,7 +314,8 @@ export function useAIChat() {
       setIsLoading(true);
       setTypingIndicator({ isVisible: true, message: 'Analyzing codebase structure and patterns...' });
       
-      // Perform comprehensive analysis
+      // Perform comprehensive analysis using local analysis service
+      // This doesn't require OpenAI API calls for basic structure analysis
       const analysis = await analysisService.analyzeCodebase(activeSession.codebaseContext);
 
       // Update codebase context with analysis
@@ -395,6 +449,114 @@ You can now ask me specific questions about your code, request refactoring sugge
     }
   }, [activeSession, getAnalysisService]);
 
+  const setCurrentFile = useCallback((fileContext: CurrentFileContext | null) => {
+    setCurrentFileContext(fileContext);
+  }, []);
+
+  const updateSessionCodebase = useCallback(async (codebaseContext: CodebaseContext) => {
+    if (!activeSession) {
+      throw new Error('No active session to update');
+    }
+
+    const updatedSession = {
+      ...activeSession,
+      codebaseContext,
+      name: activeSession.name.includes('Code Analysis') 
+        ? activeSession.name 
+        : `${activeSession.name} - Code Analysis`,
+      updatedAt: new Date(),
+    };
+
+    // Persist the session update first
+    await storageManager.current.saveChatSession(updatedSession);
+
+    // Add a small system message so the chat history explicitly reflects
+    // that the AI now has access to the loaded codebase. This helps steer
+    // the model away from disclaimers and gives users a clear signal.
+    const contextIntroMessage: ChatMessage = {
+      id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      role: 'system',
+      content: `Repository codebase attached: ${codebaseContext.files.length} files available for analysis. Ask about specific files, components, or patterns.`,
+      timestamp: new Date(),
+    };
+
+    await storageManager.current.addMessageToSession(updatedSession.id, contextIntroMessage);
+
+    // Update local state
+    setActiveSession({
+      ...updatedSession,
+      messages: [...updatedSession.messages, contextIntroMessage],
+    });
+    setSessions(prev => prev.map(s => s.id === activeSession.id ? {
+      ...updatedSession,
+      messages: [...updatedSession.messages, contextIntroMessage],
+    } : s));
+    
+    return updatedSession;
+  }, [activeSession]);
+
+  const analyzeCurrentFile = useCallback(async () => {
+    if (!currentFileContext) {
+      throw new Error('No file is currently selected');
+    }
+    
+    try {
+      setIsLoading(true);
+      setTypingIndicator({ isVisible: true, message: 'Analyzing current file...' });
+      
+      const apiResponse = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          type: 'analysis',
+          code: currentFileContext.content,
+          filePath: currentFileContext.filePath,
+          context: activeSession?.codebaseContext,
+        }),
+      });
+
+      if (!apiResponse.ok) {
+        const errorData = await apiResponse.json();
+        throw new Error(errorData.error || 'Failed to analyze file');
+      }
+
+      const analysis = await apiResponse.json();
+      return analysis;
+    } catch (error) {
+      console.error('Failed to analyze current file:', error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+      setTypingIndicator({ isVisible: false });
+    }
+  }, [currentFileContext, activeSession]);
+
+  const getFileSpecificSuggestions = useCallback(async (query?: string) => {
+    if (!currentFileContext) {
+      return [];
+    }
+
+    const analysisService = getAnalysisService();
+    
+    try {
+      return await analysisService.generateFileSpecificSuggestions(
+        currentFileContext.filePath,
+        currentFileContext.content,
+        currentFileContext.language,
+        query
+      );
+    } catch (error) {
+      console.error('Failed to get file-specific suggestions:', error);
+      return [
+        'Select a file to get specific suggestions',
+        'Ask questions about the current file',
+        'Request code review or refactoring advice',
+      ];
+    }
+  }, [currentFileContext, getAnalysisService]);
+
   return {
     // State
     sessions,
@@ -402,21 +564,27 @@ You can now ask me specific questions about your code, request refactoring sugge
     isLoading,
     error,
     typingIndicator,
+    currentFileContext,
     
     // Actions
     createNewSession,
     switchToSession,
     deleteSession,
+    deleteAllSessions,
     sendMessage,
     uploadFiles,
     analyzeCodebase,
     clearError,
     retryLastMessage,
     loadSessions,
+    setCurrentFile,
+    updateSessionCodebase,
     
     // Analysis features
     findCodeReferences,
     generateInsights,
     getContextualSuggestions,
+    analyzeCurrentFile,
+    getFileSpecificSuggestions,
   };
 }

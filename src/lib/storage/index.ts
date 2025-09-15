@@ -44,7 +44,6 @@ export type {
   CodeFile,
   ProjectStructure,
   CodeAnalysis,
-  Suggestion,
   StorageError,
   StorageResult,
   AutoSaveConfig

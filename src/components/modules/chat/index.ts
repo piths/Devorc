@@ -1,3 +1,9 @@
 export { ChatPage } from './chat-page';
 export { ChatInterface } from './chat-interface';
 export { ChatSessions } from './chat-sessions';
+export { FileExplorerPlaceholder } from './file-explorer-placeholder';
+export { GitHubRepositorySelector } from './github-repository-selector';
+export { GitHubRepositorySelectorDemo } from './github-repository-selector-demo';
+export { GitHubFileExplorer } from './github-file-explorer';
+export { CodeViewer } from './code-viewer';
+export { FileNavigationToolbar } from './file-navigation-toolbar';

@@ -93,8 +93,16 @@ export function GitHubAuthProvider({ children }: GitHubAuthProviderProps) {
           await storageManager.remove(STORAGE_KEY);
           setError('Saved authentication token is invalid');
         }
+      } else if (result.error?.code === 'NOT_FOUND') {
+        // No saved connection found, but that's okay - user needs to authenticate
+        console.log('No saved GitHub connection found');
+      } else {
+        // There was an actual error loading the connection
+        console.error('Error loading saved connection:', result.error);
+        setError(result.error?.message || 'Failed to load authentication');
       }
     } catch (err) {
+      console.error('Error loading saved connection:', err);
       setError(err instanceof Error ? err.message : 'Failed to load authentication');
     } finally {
       setIsLoading(false);

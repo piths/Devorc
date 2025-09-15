@@ -150,7 +150,7 @@ export interface CanvasElement {
   connections: Connection[];
 }
 
-export type ElementType = 'text' | 'rectangle' | 'circle' | 'arrow' | 'connector';
+export type ElementType = 'text' | 'rectangle' | 'circle' | 'arrow' | 'connector' | 'line' | 'polygon' | 'image' | 'group' | 'sticky-note' | 'flowchart-shape';
 
 export interface Point {
   x: number;
@@ -170,6 +170,20 @@ export interface ElementStyle {
   fontFamily?: string;
   opacity?: number;
   textAlign?: 'left' | 'center' | 'right';
+  fontWeight?: 'normal' | 'bold' | 'lighter' | 'bolder' | number;
+  fontStyle?: 'normal' | 'italic' | 'oblique';
+  textDecoration?: 'none' | 'underline' | 'line-through';
+  borderRadius?: number;
+  shadowColor?: string;
+  shadowBlur?: number;
+  shadowOffsetX?: number;
+  shadowOffsetY?: number;
+  gradient?: {
+    type: 'linear' | 'radial';
+    startColor: string;
+    endColor: string;
+    angle?: number;
+  };
 }
 
 export interface Connection {
@@ -179,64 +193,16 @@ export interface Connection {
   style: ElementStyle;
 }
 
-// AI Chat Models
-export interface ChatSession {
-  id: string;
-  name: string;
-  messages: ChatMessage[];
-  codebaseContext?: CodebaseContext;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export interface ChatMessage {
-  id: string;
-  role: 'user' | 'assistant';
-  content: string;
-  timestamp: Date;
-  codeReferences?: CodeReference[];
-}
-
-export interface CodeReference {
-  filePath: string;
-  lineStart: number;
-  lineEnd: number;
-  content: string;
-}
-
-export interface CodebaseContext {
-  files: CodeFile[];
-  structure: ProjectStructure;
-  analysis: CodeAnalysis;
-}
-
-export interface CodeFile {
-  path: string;
-  content: string;
-  language: string;
-  size: number;
-  lastModified: Date;
-}
-
-export interface ProjectStructure {
-  directories: string[];
-  files: string[];
-  dependencies: Record<string, string>;
-}
-
-export interface CodeAnalysis {
-  complexity: number;
-  maintainabilityIndex: number;
-  suggestions: Suggestion[];
-  patterns: string[];
-}
-
-export interface Suggestion {
-  type: 'improvement' | 'warning' | 'error';
-  message: string;
-  filePath?: string;
-  lineNumber?: number;
-}
+// AI Chat Models - Re-export from chat types to maintain compatibility
+export type { 
+  ChatSession, 
+  ChatMessage, 
+  CodeReference, 
+  CodebaseContext, 
+  CodeFile, 
+  ProjectStructure, 
+  CodeAnalysis 
+} from './chat';
 
 // Storage Error Types
 export class StorageError extends Error {

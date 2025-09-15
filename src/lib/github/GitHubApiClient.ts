@@ -14,6 +14,8 @@ import {
   AuthResult,
   GitHubConnection,
   GitHubApiError,
+  GitHubTree,
+  GitHubFileContent,
 } from '@/types/github';
 
 interface RateLimitInfo {
@@ -444,5 +446,51 @@ export class GitHubApiClient {
       },
       body: JSON.stringify({ reviewers }),
     });
+  }
+
+  // File Tree Methods
+  async getRepositoryTree(
+    owner: string,
+    repo: string,
+    treeSha: string = 'HEAD',
+    recursive: boolean = false
+  ): Promise<import('@/types/github').GitHubTree> {
+    const params = new URLSearchParams();
+    if (recursive) params.append('recursive', '1');
+    
+    const queryString = params.toString();
+    const endpoint = `/repos/${owner}/${repo}/git/trees/${treeSha}${queryString ? `?${queryString}` : ''}`;
+    
+    return this.makeRequest<import('@/types/github').GitHubTree>(endpoint);
+  }
+
+  async getFileContent(
+    owner: string,
+    repo: string,
+    path: string,
+    ref?: string
+  ): Promise<import('@/types/github').GitHubFileContent> {
+    const params = new URLSearchParams();
+    if (ref) params.append('ref', ref);
+    
+    const queryString = params.toString();
+    const endpoint = `/repos/${owner}/${repo}/contents/${path}${queryString ? `?${queryString}` : ''}`;
+    
+    return this.makeRequest<import('@/types/github').GitHubFileContent>(endpoint);
+  }
+
+  async getDirectoryContents(
+    owner: string,
+    repo: string,
+    path: string = '',
+    ref?: string
+  ): Promise<import('@/types/github').GitHubFileContent[]> {
+    const params = new URLSearchParams();
+    if (ref) params.append('ref', ref);
+    
+    const queryString = params.toString();
+    const endpoint = `/repos/${owner}/${repo}/contents/${path}${queryString ? `?${queryString}` : ''}`;
+    
+    return this.makeRequest<import('@/types/github').GitHubFileContent[]>(endpoint);
   }
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useRef, useEffect, useState, useCallback } from 'react';
-import { Stage, Layer, Rect, Circle, Text, Transformer, Arrow } from 'react-konva';
+import { Stage, Layer, Rect, Circle, Text, Transformer, Arrow, Line, Image, Group, RegularPolygon } from 'react-konva';
 import Konva from 'konva';
 import { useCanvas } from '@/contexts/CanvasContext';
 import { CanvasElement, Point } from '@/types/storage';
@@ -390,7 +390,6 @@ export const ProjectCanvas = React.forwardRef<Konva.Stage, ProjectCanvasProps>((
     const isConnectionStart = connectionStart === element.id;
     
     const commonProps = {
-      key: element.id,
       id: element.id,
       x: element.position.x,
       y: element.position.y,
@@ -411,6 +410,7 @@ export const ProjectCanvas = React.forwardRef<Konva.Stage, ProjectCanvasProps>((
       case 'rectangle':
         return (
           <Rect
+            key={element.id}
             {...commonProps}
             fill={element.style.fill}
             stroke={element.style.stroke}
@@ -422,6 +422,7 @@ export const ProjectCanvas = React.forwardRef<Konva.Stage, ProjectCanvasProps>((
       case 'circle':
         return (
           <Circle
+            key={element.id}
             {...commonProps}
             radius={Math.min(element.size.width, element.size.height) / 2}
             fill={element.style.fill}
@@ -434,12 +435,103 @@ export const ProjectCanvas = React.forwardRef<Konva.Stage, ProjectCanvasProps>((
       case 'text':
         return (
           <Text
+            key={element.id}
             {...commonProps}
             text={String(element.data.text || 'Text')}
-            fontSize={element.style.fontSize}
-            fontFamily={element.style.fontFamily}
-            fill={element.style.fill}
-            align={element.style.textAlign}
+            fontSize={element.style.fontSize || 16}
+            fontFamily={element.style.fontFamily || 'Arial'}
+            fill={element.style.fill || '#000000'}
+            align={element.style.textAlign || 'left'}
+            fontWeight={element.style.fontWeight}
+            fontStyle={element.style.fontStyle}
+            textDecoration={element.style.textDecoration}
+          />
+        );
+
+      case 'line':
+        return (
+          <Line
+            key={element.id}
+            {...commonProps}
+            points={element.data.points as number[] || [0, 0, 100, 0]}
+            stroke={element.style.stroke || '#000000'}
+            strokeWidth={element.style.strokeWidth || 2}
+            opacity={element.style.opacity || 1}
+          />
+        );
+
+      case 'polygon':
+        return (
+          <RegularPolygon
+            key={element.id}
+            {...commonProps}
+            sides={element.data.sides as number || 6}
+            radius={Math.min(element.size.width, element.size.height) / 2}
+            fill={element.style.fill || '#ffffff'}
+            stroke={element.style.stroke || '#000000'}
+            strokeWidth={element.style.strokeWidth || 1}
+            opacity={element.style.opacity || 1}
+          />
+        );
+
+      case 'sticky-note':
+        return (
+          <Group key={element.id}>
+            <Rect
+              {...commonProps}
+              fill={element.style.fill || '#ffff99'}
+              stroke={element.style.stroke || '#cccc00'}
+              strokeWidth={element.style.strokeWidth || 1}
+              cornerRadius={element.style.borderRadius || 8}
+              shadowColor={element.style.shadowColor || '#000000'}
+              shadowBlur={element.style.shadowBlur || 4}
+              shadowOffsetX={element.style.shadowOffsetX || 2}
+              shadowOffsetY={element.style.shadowOffsetY || 2}
+            />
+            <Text
+              x={element.position.x + 8}
+              y={element.position.y + 8}
+              width={element.size.width - 16}
+              height={element.size.height - 16}
+              text={String(element.data.text || 'Sticky Note')}
+              fontSize={element.style.fontSize || 14}
+              fontFamily={element.style.fontFamily || 'Arial'}
+              fill={element.style.stroke || '#000000'}
+              align={element.style.textAlign || 'left'}
+            />
+          </Group>
+        );
+
+      case 'flowchart-shape':
+        return (
+          <Group key={element.id}>
+            <Rect
+              {...commonProps}
+              fill={element.style.fill || '#e3f2fd'}
+              stroke={element.style.stroke || '#1976d2'}
+              strokeWidth={element.style.strokeWidth || 2}
+              cornerRadius={element.style.borderRadius || 8}
+            />
+            <Text
+              x={element.position.x + 8}
+              y={element.position.y + element.size.height / 2 - 10}
+              width={element.size.width - 16}
+              text={String(element.data.text || 'Process')}
+              fontSize={element.style.fontSize || 14}
+              fontFamily={element.style.fontFamily || 'Arial'}
+              fill={element.style.stroke || '#1976d2'}
+              align="center"
+            />
+          </Group>
+        );
+
+      case 'image':
+        return (
+          <Image
+            key={element.id}
+            {...commonProps}
+            image={element.data.image as HTMLImageElement}
+            opacity={element.style.opacity || 1}
           />
         );
 

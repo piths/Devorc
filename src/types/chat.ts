@@ -61,6 +61,7 @@ export interface OpenAIConfig {
   model: string;
   maxTokens: number;
   temperature: number;
+  baseURL?: string;
 }
 
 export interface ChatError {
@@ -79,4 +80,16 @@ export interface FileUploadResult {
 export interface TypingIndicator {
   isVisible: boolean;
   message?: string;
+}
+
+export interface CurrentFileContext {
+  repository: {
+    name: string;
+    full_name: string;
+    default_branch: string;
+  };
+  filePath: string;
+  content: string;
+  language: string;
+  size: number;
 }

@@ -20,13 +20,13 @@ export function ChatInterface({ className }: ChatInterfaceProps) {
   const [inputValue, setInputValue] = useState('');
   const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const {
     activeSession,
     isLoading,
     error,
     typingIndicator,
+    currentFileContext,
     sendMessage,
     uploadFiles,
     analyzeCodebase,
@@ -34,10 +34,7 @@ export function ChatInterface({ className }: ChatInterfaceProps) {
     retryLastMessage,
   } = useAIChat();
 
-  // Auto-scroll to bottom when new messages arrive
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [activeSession?.messages, typingIndicator]);
+  // Auto-scroll disabled - chat will not scroll automatically
 
   const handleSendMessage = async () => {
     if (!inputValue.trim() || isLoading) return;
@@ -180,20 +177,32 @@ export function ChatInterface({ className }: ChatInterfaceProps) {
   };
 
   return (
-    <Card className={cn('flex flex-col h-full', className)}>
+    <Card className={cn('flex flex-col h-full rounded-none overflow-hidden', className)}>
       <CardHeader className="flex-shrink-0">
         <CardTitle className="flex items-center gap-2">
           <FileText className="w-5 h-5" />
           AI Chat Assistant
-          {activeSession?.codebaseContext && (
-            <Badge variant="secondary" className="ml-auto">
-              {activeSession.codebaseContext.files.length} files loaded
-            </Badge>
-          )}
+          <div className="ml-auto flex items-center gap-2">
+            {currentFileContext && (
+              <Badge variant="outline" className="text-xs">
+                📄 {currentFileContext.filePath.split('/').pop()}
+              </Badge>
+            )}
+            {activeSession?.codebaseContext && (
+              <Badge variant="secondary">
+                {activeSession.codebaseContext.files.length} files loaded
+              </Badge>
+            )}
+          </div>
         </CardTitle>
+        {currentFileContext && (
+          <div className="text-xs text-muted-foreground">
+            Currently viewing: {currentFileContext.filePath} ({currentFileContext.language})
+          </div>
+        )}
       </CardHeader>
 
-      <CardContent className="flex-1 flex flex-col p-0">
+      <CardContent className="flex-1 flex flex-col p-0 min-h-0">
         {/* Error Display */}
         {error && (
           <div className="p-4 border-b">
@@ -223,33 +232,41 @@ export function ChatInterface({ className }: ChatInterfaceProps) {
         )}
 
         {/* Messages Area */}
-        <ScrollArea className="flex-1">
+        {!activeSession || activeSession.messages.length === 0 ? (
           <div
             className={cn(
-              'min-h-full',
+              'flex-1 flex flex-col items-center justify-center p-8 text-center',
               isDragOver && 'bg-muted/50 border-2 border-dashed border-primary'
             )}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
           >
-            {!activeSession || activeSession.messages.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full p-8 text-center">
-                <FileText className="w-12 h-12 text-muted-foreground mb-4" />
-                <h3 className="text-lg font-medium mb-2">Start a conversation</h3>
-                <p className="text-muted-foreground mb-4">
-                  Ask questions about your code or upload files for analysis
-                </p>
-                <Button
-                  variant="outline"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="gap-2"
-                >
-                  <Upload className="w-4 h-4" />
-                  Upload Code Files
-                </Button>
-              </div>
-            ) : (
+            <FileText className="w-12 h-12 text-muted-foreground mb-4" />
+            <h3 className="text-lg font-medium mb-2">Start a conversation</h3>
+            <p className="text-muted-foreground mb-4">
+              Ask questions about your code or upload files for analysis
+            </p>
+            <Button
+              variant="outline"
+              onClick={() => fileInputRef.current?.click()}
+              className="gap-2"
+            >
+              <Upload className="w-4 h-4" />
+              Upload Code Files
+            </Button>
+          </div>
+        ) : (
+          <ScrollArea className="flex-1 min-h-0 overflow-hidden" style={{ overscrollBehavior: 'contain' }}>
+            <div
+              className={cn(
+                'min-h-full overflow-hidden',
+                isDragOver && 'bg-muted/50 border-2 border-dashed border-primary'
+              )}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+            >
               <div>
                 {activeSession.messages.map(renderMessage)}
                 
@@ -272,27 +289,26 @@ export function ChatInterface({ className }: ChatInterfaceProps) {
                   </div>
                 )}
                 
-                <div ref={messagesEndRef} />
               </div>
-            )}
 
-            {/* Drag Overlay */}
-            {isDragOver && (
-              <div className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm">
-                <div className="text-center">
-                  <Upload className="w-12 h-12 text-primary mx-auto mb-4" />
-                  <p className="text-lg font-medium">Drop files to upload</p>
-                  <p className="text-muted-foreground">
-                    Supported: .js, .ts, .py, .java, .cpp, and more
-                  </p>
+              {/* Drag Overlay */}
+              {isDragOver && (
+                <div className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm">
+                  <div className="text-center">
+                    <Upload className="w-12 h-12 text-primary mx-auto mb-4" />
+                    <p className="text-lg font-medium">Drop files to upload</p>
+                    <p className="text-muted-foreground">
+                      Supported: .js, .ts, .py, .java, .cpp, and more
+                    </p>
+                  </div>
                 </div>
-              </div>
-            )}
-          </div>
-        </ScrollArea>
+              )}
+            </div>
+          </ScrollArea>
+        )}
 
         {/* Input Area */}
-        <div className="flex-shrink-0 p-4 border-t">
+        <div className="flex-shrink-0 p-4 border-t bg-background">
           <div className="flex gap-2">
             <Input
               value={inputValue}

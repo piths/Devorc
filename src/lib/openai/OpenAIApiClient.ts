@@ -1,5 +1,25 @@
 import { ChatMessage, CodeAnalysis, CodebaseContext, ChatError, OpenAIConfig, CodeReference } from '@/types/chat';
 
+/**
+ * OpenAI API Client with support for OpenRouter and other OpenAI-compatible APIs
+ * 
+ * Configuration options:
+ * 1. OpenAI (default):
+ *    - OPENAI_API_KEY=sk-...
+ *    - OPENAI_BASE_URL=https://api.openai.com/v1 (default)
+ *    - OPENAI_MODEL=gpt-4o-mini (default)
+ * 
+ * 2. OpenRouter:
+ *    - OPENAI_API_KEY=sk-or-v1-... (your OpenRouter API key)
+ *    - OPENAI_BASE_URL=https://openrouter.ai/api/v1
+ *    - OPENAI_MODEL=openai/gpt-4o-mini (or any supported model)
+ * 
+ * 3. Other providers (Anthropic via OpenRouter, etc.):
+ *    - OPENAI_API_KEY=your_provider_key
+ *    - OPENAI_BASE_URL=provider_base_url
+ *    - OPENAI_MODEL=provider_model_name
+ */
+
 // Minimal types for OpenAI Chat Completions API responses we consume
 type ChatCompletionMessage = {
   role: string;
@@ -25,9 +45,10 @@ export class OpenAIApiClient {
   constructor(config: Partial<OpenAIConfig> = {}) {
     this.config = {
       apiKey: config.apiKey || process.env.OPENAI_API_KEY || '',
-      model: config.model || 'gpt-4o-mini',
+      model: config.model || process.env.OPENAI_MODEL || 'gpt-4o-mini',
       maxTokens: config.maxTokens || 2000,
       temperature: config.temperature || 0.7,
+      baseURL: config.baseURL || process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1',
     };
 
     if (!this.config.apiKey) {
@@ -160,8 +181,8 @@ Provide suggestions as a JSON array of strings.`;
     }
   }
 
-  private async makeRequest<T>(endpoint: string, body: Record<string, unknown>): Promise<T> {
-    const url = `https://api.openai.com/v1${endpoint}`;
+  async makeRequest<T>(endpoint: string, body: Record<string, unknown>): Promise<T> {
+    const url = `${this.config.baseURL}${endpoint}`;
     
     for (let attempt = 0; attempt <= this.maxRetries; attempt++) {
       try {
@@ -340,7 +361,7 @@ Be specific and practical in your advice.`;
   }
 
   private buildSystemMessage(context?: CodebaseContext): string {
-    let systemMessage = `You are an AI assistant specialized in helping developers with their code and projects. 
+    let systemMessage = `You are an AI assistant specialized in helping developers with their code and projects.
 You provide helpful, accurate, and actionable advice about software development, code review, and best practices.
 
 When referencing specific code, use the format [filename:line] to create code references that users can easily locate.`;
@@ -352,7 +373,7 @@ When referencing specific code, use the format [filename:line] to create code re
 - Complexity: ${context.analysis?.complexity || 'Unknown'}
 - Architecture patterns: ${context.analysis?.patterns.join(', ') || 'Unknown'}
 
-You have access to the project structure and can reference specific files and code sections.`;
+Important: You do have access to a snapshot of this codebase provided by the UI. Ground answers in these files and never claim you lack access to the codebase. Prefer citing code using [filename:line] and point to concrete files/components.`;
     }
 
     return systemMessage;

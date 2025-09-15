@@ -26,6 +26,7 @@ describe('ChatInterface', () => {
     isLoading: false,
     error: null,
     typingIndicator: { isVisible: false },
+    currentFileContext: null,
     sendMessage: jest.fn(),
     uploadFiles: jest.fn(),
     analyzeCodebase: jest.fn(),
@@ -156,15 +157,24 @@ describe('ChatInterface', () => {
   });
 
   it('displays typing indicator when AI is responding', () => {
+    const mockSession = {
+      id: 'test-session',
+      name: 'Test Chat',
+      messages: [
+        {
+          id: 'msg-1',
+          role: 'user' as const,
+          content: 'Hello',
+          timestamp: new Date(),
+        },
+      ],
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
     mockUseAIChat.mockReturnValue({
       ...mockChatHook,
-      activeSession: {
-        id: 'test-session',
-        name: 'Test Chat',
-        messages: [],
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },
+      activeSession: mockSession,
       typingIndicator: { isVisible: true, message: 'AI is thinking...' },
     });
 
@@ -207,5 +217,36 @@ describe('ChatInterface', () => {
     render(<ChatInterface />);
     
     expect(screen.getByText('1 files loaded')).toBeInTheDocument();
+  });
+
+  it('shows current file indicator when file is selected', () => {
+    const mockFileContext = {
+      repository: {
+        name: 'test-repo',
+        full_name: 'user/test-repo',
+        default_branch: 'main',
+      },
+      filePath: 'src/components/test.tsx',
+      content: 'export const Test = () => <div>Test</div>;',
+      language: 'typescript',
+      size: 150,
+    };
+
+    mockUseAIChat.mockReturnValue({
+      ...mockChatHook,
+      currentFileContext: mockFileContext,
+      activeSession: {
+        id: 'test-session',
+        name: 'Test Chat',
+        messages: [],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    });
+
+    render(<ChatInterface />);
+    
+    expect(screen.getByText('📄 test.tsx')).toBeInTheDocument();
+    expect(screen.getByText('Currently viewing: src/components/test.tsx (typescript)')).toBeInTheDocument();
   });
 });

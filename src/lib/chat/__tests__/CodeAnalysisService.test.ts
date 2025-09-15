@@ -133,4 +133,51 @@ export function validateEmail(email) {
       expect(patterns).toContain('ES6 Modules');
     });
   });
+
+  describe('analyzeSingleFile', () => {
+    it('should analyze a single file with fallback', async () => {
+      const filePath = 'src/test.ts';
+      const content = 'function test() { console.log("hello"); }';
+      const language = 'typescript';
+
+      const analysis = await service.analyzeSingleFile(filePath, content, language);
+
+      expect(analysis).toBeDefined();
+      expect(analysis.summary).toContain('typescript');
+      expect(analysis.complexity).toMatch(/^(low|medium|high)$/);
+      expect(analysis.maintainability).toBeGreaterThanOrEqual(0);
+      expect(analysis.maintainability).toBeLessThanOrEqual(100);
+    }, 10000); // Increase timeout for potential API calls
+  });
+
+  describe('generateFileSpecificSuggestions', () => {
+    it('should generate fallback suggestions for a file', async () => {
+      const filePath = 'src/test.ts';
+      const content = 'function test() { console.log("hello"); }';
+      const language = 'typescript';
+
+      const suggestions = await service.generateFileSpecificSuggestions(filePath, content, language);
+
+      expect(suggestions).toBeDefined();
+      expect(Array.isArray(suggestions)).toBe(true);
+      expect(suggestions.length).toBeGreaterThan(0);
+      expect(suggestions.length).toBeLessThanOrEqual(5);
+    });
+  });
+
+  describe('enhanceQueryWithFileContext', () => {
+    it('should enhance query with file context information', () => {
+      const query = 'What does this function do?';
+      const filePath = 'src/test.ts';
+      const content = 'function test() { console.log("hello"); }';
+      const language = 'typescript';
+
+      const enhancedQuery = service.enhanceQueryWithFileContext(query, filePath, content, language);
+
+      expect(enhancedQuery).toContain('I\'m looking at the file: src/test.ts');
+      expect(enhancedQuery).toContain('typescript');
+      expect(enhancedQuery).toContain('console.log("hello");');
+      expect(enhancedQuery).toContain('User question: What does this function do?');
+    });
+  });
 });

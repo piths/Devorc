@@ -31,11 +31,13 @@ export interface CanvasViewport {
 export interface CanvasState {
   project: CanvasProject | null;
   selectedElements: string[];
-  tool: 'select' | 'text' | 'rectangle' | 'circle' | 'connector';
+  tool: 'select' | 'text' | 'rectangle' | 'circle' | 'connector' | 'line' | 'polygon' | 'image' | 'sticky-note' | 'flowchart-shape';
   viewport: CanvasViewport;
   isDragging: boolean;
   isDrawing: boolean;
   connectionStart: string | null;
+  isGrouping: boolean;
+  isMultiSelecting: boolean;
 }
 
 export interface CanvasActions {

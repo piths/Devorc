@@ -185,6 +185,121 @@ export class CodeAnalysisService {
     }
   }
 
+  /**
+   * Analyzes a single file with enhanced context awareness
+   */
+  async analyzeSingleFile(
+    filePath: string,
+    content: string,
+    language: string,
+    codebaseContext?: CodebaseContext
+  ): Promise<CodeAnalysis> {
+    try {
+      if (this.openaiClient && this.openaiClient['config']?.apiKey) {
+        return await this.openaiClient.analyzeCodeWithContext(
+          content,
+          filePath,
+          codebaseContext
+        );
+      }
+      
+      // Fallback analysis for single file
+      return this.generateSingleFileFallbackAnalysis(filePath, content, language);
+    } catch (error) {
+      console.warn('Single file analysis failed:', error);
+      return this.generateSingleFileFallbackAnalysis(filePath, content, language);
+    }
+  }
+
+  /**
+   * Generates file-specific suggestions based on current file context
+   */
+  async generateFileSpecificSuggestions(
+    filePath: string,
+    content: string,
+    language: string,
+    query?: string
+  ): Promise<string[]> {
+    try {
+      if (!this.openaiClient) {
+        return this.generateFallbackFileSpecificSuggestions(filePath, content, language);
+      }
+
+      const prompt = `Analyze this ${language} file and provide specific, actionable suggestions for improvement:
+
+File: ${filePath}
+Content:
+\`\`\`${language}
+${content}
+\`\`\`
+
+${query ? `User is asking: "${query}"` : ''}
+
+Please provide 5 specific suggestions that are relevant to this file, focusing on:
+1. Code quality and best practices
+2. Performance optimizations
+3. Security considerations
+4. Maintainability improvements
+5. ${language}-specific recommendations
+
+Format as a JSON array of strings.`;
+
+      const response = await this.openaiClient.chatCompletion([
+        { 
+          id: 'temp', 
+          role: 'user', 
+          content: prompt, 
+          timestamp: new Date() 
+        }
+      ]);
+
+      // Try to parse as JSON array, fallback to splitting by lines
+      try {
+        const suggestions = JSON.parse(response.content);
+        return Array.isArray(suggestions) ? suggestions : [response.content];
+      } catch {
+        // If not JSON, split by lines and clean up
+        return response.content
+          .split('\n')
+          .filter(line => line.trim().length > 0)
+          .map(line => line.replace(/^[-*•]\s*/, '').trim())
+          .slice(0, 5);
+      }
+    } catch (error) {
+      console.warn('File-specific suggestions failed:', error);
+      return this.generateFallbackFileSpecificSuggestions(filePath, content, language);
+    }
+  }
+
+  /**
+   * Enhances user queries with file context for better AI responses
+   */
+  enhanceQueryWithFileContext(
+    query: string,
+    filePath: string,
+    content: string,
+    language: string
+  ): string {
+    const fileInfo = this.extractFileInfo(filePath, content, language);
+    
+    return `I'm looking at the file: ${filePath} (${language})
+
+File summary:
+- Lines of code: ${content.split('\n').length}
+- File type: ${language}
+- Key functions/components: ${fileInfo.keyElements.join(', ') || 'None detected'}
+- Imports/dependencies: ${fileInfo.imports.slice(0, 3).join(', ') || 'None'}
+
+Current file content:
+\`\`\`${language}
+${content}
+\`\`\`
+
+User question: ${query}
+
+Please provide a response that specifically addresses the current file context and references relevant parts of the code when appropriate.`;
+  }
+
   private async performAIAnalysis(
     codebaseContext: CodebaseContext
   ): Promise<Partial<CodeAnalysis>> {
@@ -586,5 +701,195 @@ export class CodeAnalysisService {
 
   private combineSuggestions(analyses: CodeAnalysis[]): string[] {
     return [...new Set(analyses.flatMap(a => a.suggestions))];
+  }
+
+  private generateSingleFileFallbackAnalysis(
+    filePath: string,
+    content: string,
+    language: string
+  ): CodeAnalysis {
+    const lines = content.split('\n');
+    const fileInfo = this.extractFileInfo(filePath, content, language);
+    
+    return {
+      summary: `This is a ${language} file with ${lines.length} lines of code. ${fileInfo.description}`,
+      technologies: fileInfo.technologies,
+      patterns: fileInfo.patterns,
+      suggestions: this.generateFallbackFileSpecificSuggestions(filePath, content, language),
+      complexity: this.calculateFileComplexity(content, language),
+      maintainability: this.calculateFileMaintainability(content, language),
+    };
+  }
+
+  private generateFallbackFileSpecificSuggestions(
+    filePath: string,
+    content: string,
+    language: string
+  ): string[] {
+    const suggestions: string[] = [];
+    const lines = content.split('\n');
+    
+    // Language-specific suggestions
+    if (language === 'typescript' || language === 'javascript') {
+      if (!content.includes('export')) {
+        suggestions.push('Consider adding proper exports for better modularity');
+      }
+      if (content.includes('any')) {
+        suggestions.push('Replace "any" types with more specific type definitions');
+      }
+      if (!content.includes('try') && content.includes('await')) {
+        suggestions.push('Add error handling with try-catch blocks for async operations');
+      }
+    }
+
+    // General suggestions based on file analysis
+    if (lines.length > 200) {
+      suggestions.push('Consider breaking this large file into smaller, more focused modules');
+    }
+    
+    if (!content.includes('test') && !filePath.includes('test')) {
+      suggestions.push('Add unit tests to improve code reliability');
+    }
+    
+    if (content.split('function').length > 10) {
+      suggestions.push('Consider extracting some functions into separate utility files');
+    }
+
+    // Add generic suggestions if none found
+    if (suggestions.length === 0) {
+      suggestions.push(
+        'Add comprehensive documentation and comments',
+        'Consider implementing error handling',
+        'Review variable and function naming for clarity',
+        'Ensure consistent code formatting',
+        'Add type annotations where applicable'
+      );
+    }
+
+    return suggestions.slice(0, 5);
+  }
+
+  private extractFileInfo(filePath: string, content: string, language: string) {
+    const imports: string[] = [];
+    const keyElements: string[] = [];
+    const technologies: string[] = [];
+    const patterns: string[] = [];
+
+    // Extract imports
+    const importMatches = content.match(/import.*from\s+['"]([^'"]+)['"]/g);
+    if (importMatches) {
+      importMatches.forEach(match => {
+        const dep = match.match(/from\s+['"]([^'"]+)['"]/)?.[1];
+        if (dep) imports.push(dep);
+      });
+    }
+
+    // Extract key elements based on language
+    if (language === 'typescript' || language === 'javascript') {
+      // Functions
+      const functionMatches = content.match(/(?:function\s+|const\s+|let\s+|var\s+)(\w+)(?:\s*=\s*(?:async\s+)?(?:function|\()|(?:\s*:\s*[^=]*)?=)/g);
+      if (functionMatches) {
+        functionMatches.forEach(match => {
+          const name = match.match(/(?:function\s+|const\s+|let\s+|var\s+)(\w+)/)?.[1];
+          if (name) keyElements.push(name);
+        });
+      }
+
+      // React components
+      if (content.includes('React') || content.includes('jsx') || content.includes('tsx')) {
+        technologies.push('React');
+        patterns.push('Component-Based Architecture');
+      }
+
+      // Hooks
+      if (content.includes('useState') || content.includes('useEffect')) {
+        patterns.push('React Hooks');
+      }
+
+      // Classes
+      const classMatches = content.match(/class\s+(\w+)/g);
+      if (classMatches) {
+        classMatches.forEach(match => {
+          const name = match.match(/class\s+(\w+)/)?.[1];
+          if (name) keyElements.push(name);
+        });
+        patterns.push('Object-Oriented Programming');
+      }
+    }
+
+    // Detect technologies from imports
+    imports.forEach(imp => {
+      if (imp.includes('react')) technologies.push('React');
+      if (imp.includes('next')) technologies.push('Next.js');
+      if (imp.includes('express')) technologies.push('Express.js');
+      if (imp.includes('tailwind')) technologies.push('Tailwind CSS');
+    });
+
+    const description = keyElements.length > 0 
+      ? `Contains ${keyElements.length} main elements including ${keyElements.slice(0, 3).join(', ')}.`
+      : 'File structure analysis available.';
+
+    return {
+      imports,
+      keyElements,
+      technologies: [...new Set(technologies)],
+      patterns: [...new Set(patterns)],
+      description,
+    };
+  }
+
+  private calculateFileComplexity(content: string, language: string): 'low' | 'medium' | 'high' {
+    const lines = content.split('\n').length;
+    let complexityScore = 0;
+
+    // Base complexity from file size
+    complexityScore += lines * 0.1;
+
+    // Language-specific complexity indicators
+    if (language === 'typescript' || language === 'javascript') {
+      complexityScore += (content.match(/if\s*\(/g) || []).length * 2;
+      complexityScore += (content.match(/for\s*\(/g) || []).length * 2;
+      complexityScore += (content.match(/while\s*\(/g) || []).length * 2;
+      complexityScore += (content.match(/switch\s*\(/g) || []).length * 3;
+      complexityScore += (content.match(/catch\s*\(/g) || []).length * 2;
+    }
+
+    if (complexityScore > 100) return 'high';
+    if (complexityScore > 50) return 'medium';
+    return 'low';
+  }
+
+  private calculateFileMaintainability(content: string, language: string): number {
+    let score = 100;
+    const lines = content.split('\n');
+
+    // Deduct for file size
+    if (lines.length > 500) score -= 20;
+    else if (lines.length > 200) score -= 10;
+
+    // Deduct for long lines
+    const longLines = lines.filter(line => line.length > 120).length;
+    score -= longLines * 2;
+
+    // Deduct for lack of comments
+    const commentLines = lines.filter(line => 
+      line.trim().startsWith('//') || 
+      line.trim().startsWith('/*') || 
+      line.trim().startsWith('*')
+    ).length;
+    const commentRatio = commentLines / lines.length;
+    if (commentRatio < 0.1) score -= 15;
+
+    // Language-specific maintainability
+    if (language === 'typescript' || language === 'javascript') {
+      // Deduct for use of 'any'
+      const anyCount = (content.match(/:\s*any\b/g) || []).length;
+      score -= anyCount * 5;
+
+      // Add points for TypeScript usage
+      if (language === 'typescript') score += 10;
+    }
+
+    return Math.max(0, Math.min(100, score));
   }
 }

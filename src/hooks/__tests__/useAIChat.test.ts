@@ -33,7 +33,10 @@ describe('useAIChat', () => {
     mockStorageManager.prototype.deleteChatSession = jest.fn().mockResolvedValue(undefined);
     
     // Mock OpenAI client methods
-    mockOpenAIClient.prototype.chatCompletion = jest.fn().mockResolvedValue('AI response');
+    mockOpenAIClient.prototype.chatCompletion = jest.fn().mockResolvedValue({
+      content: 'AI response',
+      codeReferences: []
+    });
     mockOpenAIClient.prototype.analyzeCode = jest.fn().mockResolvedValue({
       summary: 'Test analysis',
       technologies: ['JavaScript'],
@@ -153,19 +156,88 @@ describe('useAIChat', () => {
     
     // Mock a delayed response
     mockOpenAIClient.prototype.chatCompletion = jest.fn().mockImplementation(
-      () => new Promise(resolve => setTimeout(() => resolve('AI response'), 100))
+      () => new Promise(resolve => setTimeout(() => resolve({
+        content: 'AI response',
+        codeReferences: []
+      }), 100))
     );
     
+    let sendPromise: Promise<void>;
     act(() => {
-      result.current.sendMessage('Hello AI');
+      sendPromise = result.current.sendMessage('Hello AI');
     });
     
     // Should show typing indicator immediately
-    expect(result.current.typingIndicator.isVisible).toBe(true);
+    await waitFor(() => {
+      expect(result.current.typingIndicator.isVisible).toBe(true);
+    });
     
     // Wait for completion
-    await waitFor(() => {
-      expect(result.current.typingIndicator.isVisible).toBe(false);
+    await act(async () => {
+      await sendPromise;
     });
+    
+    expect(result.current.typingIndicator.isVisible).toBe(false);
+  });
+
+  it('sets and tracks current file context', async () => {
+    const { result } = renderHook(() => useAIChat());
+    
+    const fileContext = {
+      repository: {
+        name: 'test-repo',
+        full_name: 'user/test-repo',
+        default_branch: 'main',
+      },
+      filePath: 'src/test.ts',
+      content: 'console.log("test");',
+      language: 'typescript',
+      size: 100,
+    };
+    
+    act(() => {
+      result.current.setCurrentFile(fileContext);
+    });
+    
+    expect(result.current.currentFileContext).toEqual(fileContext);
+  });
+
+  it('includes file context in AI messages', async () => {
+    const { result } = renderHook(() => useAIChat());
+    
+    // Wait for initial load
+    await waitFor(() => {
+      expect(result.current.activeSession).toEqual(mockSession);
+    });
+    
+    const fileContext = {
+      repository: {
+        name: 'test-repo',
+        full_name: 'user/test-repo',
+        default_branch: 'main',
+      },
+      filePath: 'src/test.ts',
+      content: 'console.log("test");',
+      language: 'typescript',
+      size: 100,
+    };
+    
+    act(() => {
+      result.current.setCurrentFile(fileContext);
+    });
+    
+    await act(async () => {
+      await result.current.sendMessage('What does this code do?');
+    });
+    
+    // Verify that the OpenAI client was called with enhanced content including file context
+    expect(mockOpenAIClient.prototype.chatCompletion).toHaveBeenCalled();
+    const callArgs = mockOpenAIClient.prototype.chatCompletion.mock.calls[0];
+    const messages = callArgs[0];
+    const lastMessage = messages[messages.length - 1];
+    
+    expect(lastMessage.content).toContain('I\'m looking at the file: src/test.ts');
+    expect(lastMessage.content).toContain('console.log("test");');
+    expect(lastMessage.content).toContain('User question: What does this code do?');
   });
 });
