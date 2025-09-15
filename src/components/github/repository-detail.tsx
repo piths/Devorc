@@ -189,8 +189,7 @@ export function RepositoryDetail({ repository, onBack, className }: RepositoryDe
         full_name: repository.full_name,
         owner,
         repo,
-        default_branch: repository.default_branch,
-        permissions: repository.permissions
+        default_branch: repository.default_branch
       });
       
       await apiClient.createPullRequest(owner, repo, {
